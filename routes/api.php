@@ -26,4 +26,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/proposals', [ProposalController::class, 'store']);
     Route::put('/proposals/{id}/status', [ProposalController::class, 'updateStatus']);
     Route::post('/proposals/{id}/upload-evidence', [ProposalController::class, 'uploadEvidence']);
+    Route::post('/proposals/{id}/upload-bukti', [ProposalController::class, 'uploadBuktiTransfer']);
+    Route::post('/proposals/{id}/comments', [ProposalController::class, 'addComment']);
+    Route::delete('/proposals/comments/{id}', [ProposalController::class, 'deleteComment']);
+    
+    Route::get('/logs', [ProposalController::class, 'getLogs']);
 });

@@ -21,7 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'nik',
+        'nomor_telepon',
         'instansi',
         'whatsapp',
         'role',
@@ -49,5 +49,10 @@ class User extends Authenticatable
     public function proposals()
     {
         return $this->hasMany(Proposal::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(ProposalComment::class);
     }
 }

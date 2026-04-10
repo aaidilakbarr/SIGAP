@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Proposal;
+use App\Models\ActivityLog;
+use App\Models\ProposalComment;
 
 class ProposalController extends Controller
 {
@@ -12,9 +14,9 @@ class ProposalController extends Controller
     {
         $user = $request->user();
         if ($user->role === 'user') {
-            $proposals = Proposal::with('user')->where('user_id', $user->id)->get();
+            $proposals = Proposal::with(['user', 'comments.user'])->where('user_id', $user->id)->get();
         } else {
-            $proposals = Proposal::with('user')->get();
+            $proposals = Proposal::with(['user', 'comments.user'])->get();
         }
 
         return response()->json([
@@ -58,14 +60,39 @@ class ProposalController extends Controller
             'status' => 'Dalam Antrean'
         ]);
 
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'role' => $request->user()->role,
+            'action' => 'Mengajukan Proposal Baru',
+            'description' => "Proposal {$kode_tiket} diajukan untuk kegiatan {$request->kegiatan}."
+        ]);
+
         return response()->json(['status' => 'success', 'data' => $proposal]);
     }
 
     public function updateStatus(Request $request, $id)
     {
         $proposal = Proposal::findOrFail($id);
+        $oldStatus = $proposal->status;
         $proposal->status = $request->status;
         $proposal->save();
+
+        if ($request->filled('catatan_revisi')) {
+            ProposalComment::create([
+                'user_id' => $request->user()->id,
+                'proposal_id' => $proposal->id,
+                'komentar' => $request->catatan_revisi,
+            ]);
+        }
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'role' => $request->user()->role,
+            'action' => 'Update Status Proposal',
+            'description' => "Status proposal {$proposal->kode_tiket} diubah dari {$oldStatus} menjadi {$request->status}."
+        ]);
 
         return response()->json(['status' => 'success', 'data' => $proposal]);
     }
@@ -83,6 +110,96 @@ class ProposalController extends Controller
         $proposal->status = 'Menunggu Verif';
         $proposal->save();
 
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'role' => $request->user()->role,
+            'action' => 'Upload Evidence',
+            'description' => "Pengguna mengunggah evidence untuk proposal {$proposal->kode_tiket}."
+        ]);
+
         return response()->json(['status' => 'success', 'data' => $proposal]);
+    }
+
+    public function uploadBuktiTransfer(Request $request, $id)
+    {
+        $request->validate([
+            'bukti_transfer' => 'required|mimes:pdf|max:5120'
+        ]);
+
+        $proposal = Proposal::findOrFail($id);
+        
+        $path = $request->file('bukti_transfer')->store('bukti_transfer', 'public');
+        
+        $oldStatus = $proposal->status;
+        $proposal->bukti_transfer = $path;
+        $proposal->status = 'Dana Cair';
+        $proposal->save();
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'role' => $request->user()->role,
+            'action' => 'Upload Bukti Transfer',
+            'description' => "Admin mengunggah bukti pengiriman dana PDF untuk {$proposal->kode_tiket}. Status dari {$oldStatus} ke Dana Cair."
+        ]);
+
+        return response()->json(['status' => 'success', 'data' => $proposal]);
+    }
+
+    public function getLogs()
+    {
+        $logs = ActivityLog::orderBy('created_at', 'desc')->take(50)->get();
+        return response()->json([
+            'status' => 'success',
+            'data' => $logs
+        ]);
+    }
+
+    public function addComment(Request $request, $id)
+    {
+        $request->validate([
+            'komentar' => 'required|string'
+        ]);
+
+        $proposal = Proposal::findOrFail($id);
+        
+        $comment = ProposalComment::create([
+            'proposal_id' => $proposal->id,
+            'user_id' => $request->user()->id,
+            'komentar' => $request->komentar
+        ]);
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'role' => $request->user()->role,
+            'action' => 'Komentar Proposal',
+            'description' => "Menambahkan komentar pada proposal {$proposal->kode_tiket}."
+        ]);
+
+        return response()->json(['status' => 'success', 'data' => $comment->load('user')]);
+    }
+
+    public function deleteComment(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!in_array($user->role, ['superadmin', 'admin'])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $comment = ProposalComment::findOrFail($id);
+        $proposalId = $comment->proposal_id;
+        $comment->delete();
+
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'role' => $user->role,
+            'action' => 'Hapus Catatan Revisi',
+            'description' => "Menghapus catatan revisi pada proposal ID {$proposalId}."
+        ]);
+
+        return response()->json(['status' => 'success']);
     }
 }

@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'superadmin@example.com',
             'password' => Hash::make('password'),
             'role' => 'superadmin',
-            'nik' => '1111111111111111',
+            'nomor_telepon' => '081111111111',
             'instansi' => 'Pusat',
             'whatsapp' => '08111111111'
         ]);
@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'role' => 'admin',
-            'nik' => '2222222222222222',
+            'nomor_telepon' => '082222222222',
             'instansi' => 'Fakultas',
             'whatsapp' => '08222222222'
         ]);
@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'user1@example.com',
             'password' => Hash::make('password'),
             'role' => 'user',
-            'nik' => '3201010101010001',
+            'nomor_telepon' => '081234567891',
             'instansi' => 'FKIP Univ. Negeri',
             'whatsapp' => '08123456789'
         ]);
@@ -47,7 +47,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'user2@example.com',
             'password' => Hash::make('password'),
             'role' => 'user',
-            'nik' => '3201020202020002',
+            'nomor_telepon' => '081298765432',
             'instansi' => 'Fak. Ekonomi',
             'whatsapp' => '08129876543'
         ]);

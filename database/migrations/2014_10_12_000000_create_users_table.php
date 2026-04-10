@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('nik')->nullable();
+            $table->string('nomor_telepon')->nullable();
             $table->string('instansi')->nullable();
             $table->string('whatsapp')->nullable();
             $table->enum('role', ['user', 'admin', 'superadmin'])->default('user');
