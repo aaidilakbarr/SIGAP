@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import './index.css';
-import webIcon from './assets/logo-web-icon.webp';
-const bannerLogo = '/admin_dashboard_laravel/public/banner-logo.svg';
+import webIcon from './assets/icon-web.svg';
+import bannerLogo from './assets/banner.svg';
 import UserPortal from './components/UserPortal';
 
 // Bypass ngrok browser warning for API requests
@@ -148,8 +148,8 @@ export default function App() {
 
   const chartDataStatus = useMemo(() => {
     const counts = {};
-    const filteredForChart = chartFilterMonth === '' 
-      ? proposals 
+    const filteredForChart = chartFilterMonth === ''
+      ? proposals
       : proposals.filter(p => p.tgl_pelaksanaan && new Date(p.tgl_pelaksanaan).getMonth() === parseInt(chartFilterMonth));
 
     filteredForChart.forEach(p => {
@@ -172,17 +172,17 @@ export default function App() {
   const chartDataMonthly = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
     const data = months.map(m => ({ name: m, total: 0 }));
-    
-    const filteredForChart = chartFilterMonth === '' 
-      ? proposals 
+
+    const filteredForChart = chartFilterMonth === ''
+      ? proposals
       : proposals.filter(p => p.tgl_pelaksanaan && new Date(p.tgl_pelaksanaan).getMonth() === parseInt(chartFilterMonth));
 
     filteredForChart.forEach(p => {
       if (p.tgl_pelaksanaan) {
         const date = new Date(p.tgl_pelaksanaan);
         const monthIndex = date.getMonth();
-        if(monthIndex >= 0 && monthIndex < 12) {
-            data[monthIndex].total += 1;
+        if (monthIndex >= 0 && monthIndex < 12) {
+          data[monthIndex].total += 1;
         }
       }
     });
@@ -379,8 +379,8 @@ export default function App() {
       )}
 
       <aside className={`sidebar ${activeRole === 'user' && sidebarOpen ? 'sidebar-mobile-open' : ''}`}>
-        <div className="sb-top" style={{ padding: '5px' }}>
-          <img src={bannerLogo} alt="SIMDA" style={{ width: '100%', height: 'auto', display: 'block' }} />
+        <div className="sb-top" style={{ padding: '8px' }}>
+          <img src={bannerLogo} alt="SIGAP" style={{ width: '100%', height: 'auto', display: 'block' }} />
         </div>
         <nav className="nav">
           <div className="nav-grp">
@@ -503,9 +503,9 @@ export default function App() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartDataMonthly} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} allowDecimals={false} />
-                      <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} allowDecimals={false} />
+                      <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }} />
                       <Bar dataKey="total" name="Total Proposal" fill="#16a34a" radius={[4, 4, 0, 0]} maxBarSize={45} />
                     </BarChart>
                   </ResponsiveContainer>
