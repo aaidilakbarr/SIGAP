@@ -107,4 +107,4 @@ Project ini dilisensikan di bawah [MIT License](LICENSE).
 
 ---
 
-> Built with ❤️ by [Antigravity AI](https://github.com/google-deepmind)
+> 2k26 Built with ❤️
