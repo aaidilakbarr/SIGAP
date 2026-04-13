@@ -101,10 +101,4 @@ Kontribusi selalu terbuka! Jika Anda memiliki ide atau perbaikan, silakan buat *
 
 ---
 
-## 📄 Lisensi
-
-Project ini dilisensikan di bawah [MIT License](LICENSE).
-
----
-
 > 2k26 Built with ❤️
