@@ -159,14 +159,14 @@ export default function App() {
   }, [proposals, chartFilterMonth]);
 
   const CHART_COLORS = {
-    'Dalam Antrean': '#94a3b8',
-    'Dalam Review': '#3b82f6',
-    'Menunggu Fisik': '#f59e0b',
-    'Dana Cair': '#10b981',
-    'Menunggu Evidence': '#8b5cf6',
-    'Menunggu Verif': '#ec4899',
-    'Selesai': '#22c55e',
-    'Gagal Bayar': '#ef4444'
+    'Dalam Antrean': 'url(#grad-antrean)',
+    'Dalam Review': 'url(#grad-review)',
+    'Menunggu Fisik': 'url(#grad-fisik)',
+    'Dana Cair': 'url(#grad-cair)',
+    'Menunggu Evidence': 'url(#grad-evidence)',
+    'Menunggu Verif': 'url(#grad-verif)',
+    'Selesai': 'url(#grad-selesai)',
+    'Gagal Bayar': 'url(#grad-gagal)'
   };
 
   const chartDataMonthly = useMemo(() => {
@@ -232,6 +232,7 @@ export default function App() {
   const handleLogin = async (role) => {
     try {
       setLoading(true);
+      axios.defaults.baseURL = "http://127.0.0.1:8000";
       const res = await axios.post('/api/login', { role });
       const { user: dbUser, token } = res.data;
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -455,10 +456,38 @@ export default function App() {
         {activePage === 'dashboard' && (
           <div className="page-view active content" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
             <div className="stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-              <div className="sc"><div className="sc-l">Total Antrean</div><div className="sc-v">{proposals.filter(p => p.status !== 'Selesai').length}</div><div className="sc-s">Proposal Aktif</div></div>
-              <div className="sc"><div className="sc-l">Menunggu Review</div><div className="sc-v">{proposals.filter(p => p.status === 'Dalam Review').length}</div><div className="sc-s">Di Meja Pimpinan</div></div>
-              <div className="sc"><div className="sc-l">Menunggu Evidence</div><div className="sc-v">{proposals.filter(p => p.status === 'Menunggu Evidence').length}</div><div className="sc-s">Belum Upload</div></div>
-              <div className="sc"><div className="sc-l">Selesai</div><div className="sc-v">{proposals.filter(p => p.status === 'Selesai').length}</div><div className="sc-s">Diarsipkan</div></div>
+              <div className="sc">
+                <div className="sc-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                </div>
+                <div className="sc-l">Total Antrean</div>
+                <div className="sc-v">{proposals.filter(p => p.status !== 'Selesai').length}</div>
+                <button className="sc-btn" onClick={() => setActivePage('proposals')}>View Details</button>
+              </div>
+              <div className="sc">
+                <div className="sc-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                </div>
+                <div className="sc-l">Menunggu Review</div>
+                <div className="sc-v">{proposals.filter(p => p.status === 'Dalam Review').length}</div>
+                <button className="sc-btn" onClick={() => setActivePage('proposals')}>View Details</button>
+              </div>
+              <div className="sc">
+                <div className="sc-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                </div>
+                <div className="sc-l">Menunggu Evidence</div>
+                <div className="sc-v">{proposals.filter(p => p.status === 'Menunggu Evidence').length}</div>
+                <button className="sc-btn" onClick={() => setActivePage('verification')}>View Details</button>
+              </div>
+              <div className="sc">
+                <div className="sc-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div className="sc-l">Selesai</div>
+                <div className="sc-v">{proposals.filter(p => p.status === 'Selesai').length}</div>
+                <button className="sc-btn" onClick={() => setActivePage('master')}>View Details</button>
+              </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
@@ -483,10 +512,20 @@ export default function App() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
               <div className="tc" style={{ height: '380px', display: 'flex', flexDirection: 'column' }}>
                 <div className="tc-top"><div className="tc-h">Proporsi Status Proposal</div></div>
-                <div style={{ flex: 1, minHeight: 0 }}>
+                <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={chartDataStatus} cx="50%" cy="50%" innerRadius={70} outerRadius={110} paddingAngle={4} dataKey="value">
+                      <defs>
+                        <linearGradient id="grad-antrean" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#94a3b8" /><stop offset="100%" stopColor="#cbd5e1" /></linearGradient>
+                        <linearGradient id="grad-review" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#3b82f6" /><stop offset="100%" stopColor="#93c5fd" /></linearGradient>
+                        <linearGradient id="grad-fisik" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#f59e0b" /><stop offset="100%" stopColor="#fcd34d" /></linearGradient>
+                        <linearGradient id="grad-cair" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#6ee7b7" /></linearGradient>
+                        <linearGradient id="grad-evidence" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#c4b5fd" /></linearGradient>
+                        <linearGradient id="grad-verif" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#ec4899" /><stop offset="100%" stopColor="#f9a8d4" /></linearGradient>
+                        <linearGradient id="grad-selesai" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#22c55e" /><stop offset="100%" stopColor="#86efac" /></linearGradient>
+                        <linearGradient id="grad-gagal" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#ef4444" /><stop offset="100%" stopColor="#fca5a5" /></linearGradient>
+                      </defs>
+                      <Pie data={chartDataStatus} cx="50%" cy="50%" innerRadius={80} outerRadius={105} paddingAngle={-10} cornerRadius={15} dataKey="value" stroke="none">
                         {chartDataStatus.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={CHART_COLORS[entry.name] || '#cbd5e1'} />
                         ))}
@@ -495,18 +534,34 @@ export default function App() {
                       <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12.5px', paddingTop: '10px' }} />
                     </PieChart>
                   </ResponsiveContainer>
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none', marginTop: '-18px' }}>
+                    <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text)', lineHeight: '1' }}>
+                      {chartDataStatus.reduce((sum, item) => sum + item.value, 0)}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--t2)', fontWeight: 500, marginTop: '4px' }}>Proposal</div>
+                  </div>
                 </div>
               </div>
-              <div className="tc" style={{ height: '380px', display: 'flex', flexDirection: 'column' }}>
-                <div className="tc-top"><div className="tc-h">Tren Pengajuan Bulanan</div></div>
-                <div style={{ flex: 1, minHeight: 0, paddingRight: '15px' }}>
+              <div className="tc" style={{ height: '380px', display: 'flex', flexDirection: 'column', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                <div className="tc-top" style={{ borderBottom: 'none', paddingBottom: '0' }}>
+                  <div className="tc-h" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#0f172a' }}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    Tren Pengajuan Bulanan
+                  </div>
+                </div>
+                <div style={{ flex: 1, minHeight: 0, paddingRight: '15px', paddingTop: '20px' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartDataMonthly} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} allowDecimals={false} />
-                      <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }} />
-                      <Bar dataKey="total" name="Total Proposal" fill="#16a34a" radius={[4, 4, 0, 0]} maxBarSize={45} />
+                    <BarChart data={chartDataMonthly} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
+                      <defs>
+                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" stopOpacity={1}/>
+                          <stop offset="100%" stopColor="#6ee7b7" stopOpacity={0.6}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13, fontWeight: 500 }} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+                      <RechartsTooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 20px rgba(0,0,0,0.08)', fontWeight: 600, color: '#0f172a' }} />
+                      <Bar dataKey="total" name="Total Proposal" fill="url(#barGradient)" background={{ fill: '#f1f5f9', radius: 20 }} radius={20} maxBarSize={28} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -608,6 +663,8 @@ export default function App() {
             proposals={proposals}
             showToast={showToast}
             fetchProposals={fetchProposals}
+            portalTab={portalTab}
+            setPortalTab={setPortalTab}
           />
         )}
 
