@@ -1,95 +1,110 @@
-# Admin Dashboard 
+# 🚀 SIGAP - Sistem Informasi Gerak Alur Proposal
 
-Proyek ini adalah aplikasi Admin Dashboard interaktif yang dibangun menggunakan **Laravel 10** sebagai backend/API dan **React** (dengan Vite) sebagai frontend.
+**SIGAP** adalah platform monitoring dashboard modern yang dirancang untuk mengelola, melacak, dan memverifikasi alur pengajuan proposal secara sistematis dan transparan. Dibangun dengan kombinasi teknologi terbaik untuk memberikan pengalaman pengguna yang responsif dan visualisasi data yang memukau.
 
-## Persyaratan Sistem (Prerequisites)
-Sebelum menjalankan proyek ini, pastikan sistem Anda telah terinstal beberapa perangkat lunak berikut:
+---
 
-- [PHP](https://www.php.net/downloads) (Versi 8.1 atau lebih baru)
-- [Composer](https://getcomposer.org/) (Untuk manajemen dependensi PHP)
-- [Node.js & npm](https://nodejs.org/) (Untuk manajemen dependensi JavaScript dan Vite server)
-- Database server (Opsional: **MySQL**, MariaDB, atau PostgreSQL. Anda juga bisa langsung menggunakan **SQLite** untuk proses yang lebih cepat)
-- Git (opsional, untuk melakukan clone)
+## ✨ Fitur Utama
 
-## Cara Clone Proyek
-Jika proyek ini sudah ada di dalam repository Git Anda (seperti GitHub/GitLab), jalankan perintah berikut di terminal:
+- **📊 Dashboard Interaktif**: Visualisasi data real-time menggunakan Recharts (Donut & Bar Charts).
+- **📋 Manajemen Proposal**: Pengajuan, pelacakan status, dan revisi proposal dalam satu tempat.
+- **📍 Timeline Tracking**: Pantau progres proposal Anda langkah demi langkah dengan indikator visual yang jelas.
+- **📤 Verifikasi Multi-Dokumen**: Dukungan upload file proposal, bukti transfer, hingga dokumen LPJ (Evidence).
+- **👥 Multi-Role Akses**: Sistem otentikasi untuk Super Admin, Admin Reviewer, dan User/Pemohon.
+- **📈 Ekspor Data**: Unduh laporan proposal dalam format CSV untuk kebutuhan audit.
+- **📱 Responsive Design**: Optimal digunakan di desktop maupun perangkat mobile.
 
-```bash
-git clone <URL_REPOSITORY_ANDA>
-cd admin-dashboard-laravel
-```
-*(Ganti `<URL_REPOSITORY_ANDA>` dengan link repositori yang sesuai)*
+---
 
-## Cara Setup Proyek
+## 🛠️ Tech Stack
 
-Setelah berhasil melakukan clone, ikuti langkah-langkah di bawah ini untuk mengatur backend (Laravel) dan frontend (React).
+- **Backend**: [Laravel 10](https://laravel.com/) (PHP 8.1+)
+- **Frontend**: [React JS](https://reactjs.org/) & [Vite](https://vitejs.dev/)
+- **Styling**: Vanilla CSS (Custom Design System)
+- **Charts**: [Recharts](https://recharts.org/)
+- **Database**: MySQL / MariaDB
 
-### 1. Konfigurasi Backend (Laravel)
+---
 
-1. Buka terminal pada folder/direktori proyek (`admin-dashboard-laravel`).
-2. Instal semua dependensi PHP dengan Composer:
-   ```bash
-   composer install
-   ```
-3. Salin file `.env.example` menjadi `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-   *(Di Windows, Anda bisa menggunakan `copy .env.example .env` atau menyalinnya secara manual menggunakan file explorer)*
-4. Buat kunci aplikasi Laravel (App Key):
-   ```bash
-   php artisan key:generate
-   ```
-5. Sesuaikan konfigurasi database. Buka file `.env` dan perbarui bagian pengaturan koneksi databasenya. Anda bisa memilih menggunakan MySQL atau SQLite:
+## ⚙️ Panduan Instalasi (Clone Project)
 
-   **Opsi A: Menggunakan MySQL (Laragon / XAMPP)**
-   ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=nama_database_anda
-   DB_USERNAME=root
-   DB_PASSWORD=
-   ```
-   *(Pastikan Anda telah membuat database kosong di MySQL dengan nama yang sesuai sebelum melanjutkan)*.
+Ikuti langkah-langkah di bawah ini untuk menjalankan project ini di komputer lokal Anda:
 
-   **Opsi B: Menggunakan SQLite (Setup Sangat Cepat & Mudah di Laragon)**
-   ```env
-   DB_CONNECTION=sqlite
-   ```
-   *(Hapus atau beri komentar/tanda `#` pada baris `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD`. Nanti saat Anda menjalankan migrasi di langkah ke-6, Laravel secara otomatis akan menanyakan apakah Anda ingin membuat file `database.sqlite` jika file-nya belum ada).*
-6. Jalankan migrasi database (dan seeder jika ada data dummy):
-   ```bash
-   php artisan migrate
-   # atau jika Anda memiliki data dummy/seeder:
-   # php artisan migrate --seed
-   ```
-7. Buat link storage (untuk mengakses dan menyimpan file/gambar melalui folder public):
-   ```bash
-   php artisan storage:link
-   ```
+### 1. Persyaratan Sistem
+- PHP >= 8.1
+- Composer
+- Node.js & NPM
+- Web Server (Laragon direkomendasikan untu Windows)
 
-### 2. Konfigurasi Frontend (React & Vite)
-1. Buka kembali terminal di folder proyek yang sama.
-2. Instal semua dependensi JavaScript/Node:
-   ```bash
-   npm install
-   ```
+### 2. Langkah-Langkah
 
-## Cara Menjalankan Proyek
+1.  **Clone Repository**
+    ```bash
+    git clone https://github.com/username/admin_dashboard_laravel.git
+    cd admin_dashboard_laravel
+    ```
 
-Untuk menjalankan proyek secara komprehensif, Anda perlu menjalankan **dua proses secara bersamaan** (sebaiknya gunakan dua tab/jendela terminal yang berbeda).
+2.  **Instalasi Dependencies Backend**
+    ```bash
+    composer install
+    ```
 
-**Terminal 1 (Menjalankan server backend PHP/Laravel):**
-```bash
-php artisan serve
-```
-*(Server backend biasanya akan berjalan di `http://127.0.0.1:8000`)*
+3.  **Instalasi Dependencies Frontend**
+    ```bash
+    npm install
+    ```
 
-**Terminal 2 (Menjalankan server frontend React/Vite):**
-```bash
-npm run dev
-```
-*(Server development untuk aset frontend akan berjalan)*
+4.  **Konfigurasi Environment**
+    Salin file `.env.example` menjadi `.env`:
+    ```bash
+    cp .env.example .env
+    ```
+    Buka file `.env` dan sesuaikan konfigurasi database Anda.
 
-> 🚀 **Selesai!** Anda sekarang dapat membuka aplikasi dengan mengakses `http://127.0.0.1:8000` atau URL lokal yang disediakan oleh Laravel Artisan/Vite di web browser Anda.
+5.  **Generate App Key**
+    ```bash
+    php artisan key:generate
+    ```
+
+6.  **Migrasi Database**
+    ```bash
+    php artisan migrate
+    ```
+
+7.  **Link Storage** (Untuk upload file)
+    ```bash
+    php artisan storage:link
+    ```
+
+8.  **Jalankan Aplikasi**
+    Buka dua terminal berbeda:
+    - **Terminal 1 (Backend)**: `php artisan serve`
+    - **Terminal 2 (Frontend)**: `npm run dev`
+
+9.  **Akses Aplikasi**
+    Buka browser dan akses alamat yang muncul di terminal (biasanya `http://localhost:8000`).
+
+---
+
+## 📸 Tampilan Dashboard
+
+*Aplikasi ini dilengkapi dengan desain premium:*
+- **Stat Cards**: Desain pastel minimalis dengan ikon squircle.
+- **Charts**: Gradasi vertikal pada Bar Chart dan Donut Chart dengan rounded corners.
+- **Glassmorphism**: Efek transparansi pada elemen UI tertentu untuk kesan mewah.
+
+---
+
+## 🤝 Kontribusi
+
+Kontribusi selalu terbuka! Jika Anda memiliki ide atau perbaikan, silakan buat *Pull Request* atau ajukan *Issue*.
+
+---
+
+## 📄 Lisensi
+
+Project ini dilisensikan di bawah [MIT License](LICENSE).
+
+---
+
+> Built with ❤️ by [Antigravity AI](https://github.com/google-deepmind)
