@@ -20,14 +20,14 @@ const getStatusClass = (status) => {
   if (status === 'Menunggu Evidence' || status === 'Menunggu Verif') return 'sw';
   if (status === 'Selesai')   return 'sd';
   if (status === 'Gagal Bayar') return 'sf';
-  if (status === 'Dalam Review') return 'sr';
+  if (status === 'Dalam Review' || status === 'Revisi Proposal') return 'sr';
   if (status === 'Menunggu Fisik') return 'sn';
   return 'sq';
 };
 
 const getCardStatusClass = (status) => {
   if (status === 'Selesai')          return 'status-done';
-  if (status === 'Menunggu Evidence' || status === 'Menunggu Verif') return 'status-wait';
+  if (status === 'Menunggu Evidence' || status === 'Menunggu Verif' || status === 'Revisi Proposal') return 'status-wait';
   if (status === 'Gagal Bayar')      return 'status-fail';
   return 'status-active';
 };
@@ -71,7 +71,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [searchQuery, setSearchQuery]       = useState('');
   const [newProposal, setNewProposal]       = useState({
-    kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null
+    kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null, nama_bank: '', nomor_rekening: ''
   });
 
   // Filtered proposals
@@ -86,7 +86,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
 
   // Stats counts
   const totalCount   = proposals.length;
-  const actionCount  = proposals.filter(p => p.status === 'Menunggu Evidence').length;
+  const actionCount  = proposals.filter(p => p.status === 'Menunggu Evidence' || p.status === 'Revisi Proposal').length;
   const doneCount    = proposals.filter(p => p.status === 'Selesai').length;
 
   const handleCreateProposal = async () => {
@@ -97,11 +97,13 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
       formData.append('tgl_pelaksanaan', newProposal.tgl_pelaksanaan);
       formData.append('dana_diajukan',   newProposal.dana_diajukan.toString().replace(/\./g, ''));
       formData.append('catatan',         newProposal.catatan);
+      formData.append('nama_bank',       newProposal.nama_bank);
+      formData.append('nomor_rekening',  newProposal.nomor_rekening);
       if (newProposal.file) formData.append('file_proposal', newProposal.file);
 
       await axios.post('/api/proposals', formData);
       showToast('Proposal berhasil diajukan!');
-      setNewProposal({ kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null });
+      setNewProposal({ kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null, nama_bank: '', nomor_rekening: '' });
       fetchProposals();
       setPortalTab('home');
     } catch (e) {
@@ -127,6 +129,24 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
       setPortalTab('home');
     } catch (e) {
       showToast('Gagal mengupload evidence.');
+    }
+  };
+
+  const handleUploadProposal = async (proposalId) => {
+    const fileInput = document.getElementById(`proposal-up-${proposalId}`);
+    if (!fileInput || fileInput.files.length === 0) {
+      showToast('Pilih file proposal revisi terlebih dahulu!');
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append('file_proposal', fileInput.files[0]);
+      await axios.post(`/api/proposals/${proposalId}/upload-proposal`, formData);
+      showToast('Proposal revisi berhasil diunggah!');
+      fetchProposals();
+      setPortalTab('home');
+    } catch (e) {
+      showToast('Gagal mengupload proposal revisi.');
     }
   };
 
@@ -230,7 +250,10 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
                   <span className="up-card-meta-icon">📂</span>
                   {p.jenis}
                 </div>
-                {p.status === 'Menunggu Evidence' && (
+                {p.revisi_deadline && (
+                  <span className="up-action-needed" style={{ color: '#b91c1c', background: '#fee2e2' }}>⚠ Batas: {new Date(p.revisi_deadline).toLocaleDateString('id-ID')}</span>
+                )}
+                {p.status === 'Menunggu Evidence' && !p.revisi_deadline && (
                   <span className="up-action-needed">⚠ Upload LPJ</span>
                 )}
               </div>
@@ -318,6 +341,28 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
             </div>
           </div>
 
+          {/* Info Rekening */}
+          <div className="up-form-row">
+            <div className="up-form-group">
+              <label className="up-form-label">Nama Bank</label>
+              <input
+                className="up-form-input"
+                value={newProposal.nama_bank}
+                onChange={e => setNewProposal({ ...newProposal, nama_bank: e.target.value })}
+                placeholder="Contoh: BCA / Mandiri / BNI"
+              />
+            </div>
+            <div className="up-form-group">
+              <label className="up-form-label">Nomor Rekening (dan Atas Nama)</label>
+              <input
+                className="up-form-input"
+                value={newProposal.nomor_rekening}
+                onChange={e => setNewProposal({ ...newProposal, nomor_rekening: e.target.value })}
+                placeholder="Contoh: 1234567890 a.n. John Doe"
+              />
+            </div>
+          </div>
+
           {/* Catatan */}
           <div className="up-form-group">
             <label className="up-form-label">Catatan / Rincian Tambahan</label>
@@ -401,6 +446,14 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
                 <div className="up-info-val">{p.user.nomor_telepon}</div>
               </div>
             )}
+            {(p.nama_bank || p.nomor_rekening) && (
+              <div className="up-info-item" style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                <div className="up-info-key">Informasi Rekening</div>
+                <div className="up-info-val" style={{ fontWeight: 600, color: 'var(--text)' }}>
+                  {p.nama_bank || '-'} — {p.nomor_rekening || '-'}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Catatan Admin */}
@@ -467,6 +520,33 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
 
           {/* Action Section */}
           <div className="up-action-section">
+            {p.status === 'Revisi Proposal' && (
+              <div style={{ marginBottom: '20px' }}>
+                <div className="up-notice warn">
+                  <span className="up-notice-icon">⚠️</span>
+                  <span>Proposal Anda memerlukan revisi. Silakan unggah proposal baru yang sudah diperbaiki.</span>
+                </div>
+                <div className="up-upload-zone" onClick={() => document.getElementById(`proposal-up-${p.id}`)?.click()}>
+                  <div className="up-upload-zone-icon">📎</div>
+                  <div className="up-upload-zone-text">Ketuk untuk pilih file proposal baru</div>
+                  <div className="up-upload-zone-sub">PDF — Maks. 10MB</div>
+                </div>
+                <input
+                  type="file"
+                  id={`proposal-up-${p.id}`}
+                  className="up-upload-input"
+                  accept=".pdf"
+                  style={{ display: 'none' }}
+                />
+                <button
+                  className="up-submit-evidence-btn"
+                  onClick={() => handleUploadProposal(p.id)}
+                >
+                  📤 Upload Proposal Revisi
+                </button>
+              </div>
+            )}
+
             {p.status === 'Menunggu Evidence' && (
               <div>
                 <div className="up-notice warn">
@@ -511,7 +591,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
               </div>
             )}
 
-            {p.status !== 'Menunggu Evidence' && p.status !== 'Selesai' && p.status !== 'Gagal Bayar' && (
+            {p.status !== 'Menunggu Evidence' && p.status !== 'Revisi Proposal' && p.status !== 'Selesai' && p.status !== 'Gagal Bayar' && (
               <div style={{ textAlign: 'center', color: 'var(--t2)', fontSize: '13.5px', padding: '8px 0', lineHeight: '1.6' }}>
                 🔄 Sedang dalam tahap administrasi internal.<br />
                 <span style={{ color: 'var(--t3)', fontSize: '12px' }}>Pantau progres Anda secara berkala di halaman ini.</span>

@@ -32,12 +32,27 @@ class ProposalController extends Controller
             'jenis' => 'required|string',
             'tgl_pelaksanaan' => 'required|date',
             'dana_diajukan' => 'required|numeric',
-            'file_proposal' => 'nullable|file'
+            'file_proposal' => 'nullable|file',
+            'nama_bank' => 'nullable|string',
+            'nomor_rekening' => 'nullable|string'
         ]);
 
-        $latest = Proposal::orderBy('id', 'desc')->first();
-        $nextId = $latest ? $latest->id + 1 : 1;
-        $kode_tiket = 'PRO-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
+        $now = \Carbon\Carbon::now();
+        $prefix = 'PRO-' . $now->format('Ym');
+        
+        $latest = Proposal::where('kode_tiket', 'like', $prefix . '-%')
+                          ->orderBy('id', 'desc')
+                          ->first();
+                          
+        if ($latest) {
+            $parts = explode('-', $latest->kode_tiket);
+            $lastNumber = intval(end($parts));
+            $nextId = $lastNumber + 1;
+        } else {
+            $nextId = 1;
+        }
+        
+        $kode_tiket = $prefix . '-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
 
         $path = null;
         if ($request->hasFile('file_proposal')) {
@@ -57,7 +72,9 @@ class ProposalController extends Controller
             'dana_diajukan' => $request->dana_diajukan,
             'catatan' => $request->catatan,
             'file_proposal' => $path,
-            'status' => 'Dalam Antrean'
+            'status' => 'Dalam Antrean',
+            'nama_bank' => $request->nama_bank,
+            'nomor_rekening' => $request->nomor_rekening
         ]);
 
         ActivityLog::create([
@@ -76,6 +93,23 @@ class ProposalController extends Controller
         $proposal = Proposal::findOrFail($id);
         $oldStatus = $proposal->status;
         $proposal->status = $request->status;
+
+        if ($request->status === 'Revisi Proposal') {
+            if ($proposal->file_proposal) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($proposal->file_proposal);
+            }
+            $proposal->file_proposal = null;
+            $proposal->revisi_deadline = \Carbon\Carbon::now()->addDays(3);
+        }
+
+        if ($request->status === 'Menunggu Evidence' && $oldStatus === 'Menunggu Verif') {
+            if ($proposal->evidence_dokumen) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($proposal->evidence_dokumen);
+            }
+            $proposal->evidence_dokumen = null;
+            $proposal->revisi_deadline = \Carbon\Carbon::now()->addDays(3);
+        }
+
         $proposal->save();
 
         if ($request->filled('catatan_revisi')) {
@@ -108,6 +142,7 @@ class ProposalController extends Controller
         
         $proposal->evidence_dokumen = $evidencePath;
         $proposal->status = 'Menunggu Verif';
+        $proposal->revisi_deadline = null;
         $proposal->save();
 
         ActivityLog::create([
@@ -116,6 +151,32 @@ class ProposalController extends Controller
             'role' => $request->user()->role,
             'action' => 'Upload Evidence',
             'description' => "Pengguna mengunggah evidence untuk proposal {$proposal->kode_tiket}."
+        ]);
+
+        return response()->json(['status' => 'success', 'data' => $proposal]);
+    }
+
+    public function reuploadProposal(Request $request, $id)
+    {
+        $request->validate([
+            'file_proposal' => 'required|file'
+        ]);
+
+        $proposal = Proposal::findOrFail($id);
+        
+        $path = $request->file('file_proposal')->store('proposals', 'public');
+        
+        $proposal->file_proposal = $path;
+        $proposal->status = 'Dalam Antrean';
+        $proposal->revisi_deadline = null;
+        $proposal->save();
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'role' => $request->user()->role,
+            'action' => 'Upload Ulang Proposal',
+            'description' => "Pengguna mengunggah ulang file proposal {$proposal->kode_tiket} setelah diminta revisi."
         ]);
 
         return response()->json(['status' => 'success', 'data' => $proposal]);

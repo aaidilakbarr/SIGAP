@@ -161,6 +161,7 @@ export default function App() {
   const CHART_COLORS = {
     'Dalam Antrean': 'url(#grad-antrean)',
     'Dalam Review': 'url(#grad-review)',
+    'Revisi Proposal': 'url(#grad-revisi)',
     'Menunggu Fisik': 'url(#grad-fisik)',
     'Dana Cair': 'url(#grad-cair)',
     'Menunggu Evidence': 'url(#grad-evidence)',
@@ -200,7 +201,7 @@ export default function App() {
       return;
     }
 
-    const headers = ['Kode Tiket', 'Pemohon', 'Instansi', 'Kegiatan', 'Jenis', 'Tanggal Pelaksanaan', 'Dana Diajukan (Rp)', 'Status'];
+    const headers = ['Kode Tiket', 'Pemohon', 'Instansi', 'Kegiatan', 'Jenis', 'Tanggal Pelaksanaan', 'Dana Diajukan (Rp)', 'Status', 'Nama Bank', 'Nomor Rekening'];
     const csvContent = [
       headers.join(','),
       ...data.map(p => {
@@ -212,7 +213,9 @@ export default function App() {
           p.jenis,
           p.tgl_pelaksanaan,
           p.dana_diajukan,
-          p.status
+          p.status,
+          p.nama_bank || '',
+          p.nomor_rekening || ''
         ];
         return row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
       })
@@ -364,7 +367,7 @@ export default function App() {
     if (status === 'Menunggu Evidence' || status === 'Menunggu Verif') return 'sw';
     if (status === 'Selesai') return 'sd';
     if (status === 'Gagal Bayar') return 'sf';
-    if (status === 'Dalam Review') return 'sr';
+    if (status === 'Dalam Review' || status === 'Revisi Proposal') return 'sr';
     if (status === 'Menunggu Fisik') return 'sn';
     return 'sq';
   }
@@ -510,7 +513,7 @@ export default function App() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
-              <div className="tc" style={{ height: '380px', display: 'flex', flexDirection: 'column' }}>
+              <div className="tc" style={{ height: '440px', display: 'flex', flexDirection: 'column' }}>
                 <div className="tc-top"><div className="tc-h">Proporsi Status Proposal</div></div>
                 <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -518,6 +521,7 @@ export default function App() {
                       <defs>
                         <linearGradient id="grad-antrean" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#94a3b8" /><stop offset="100%" stopColor="#cbd5e1" /></linearGradient>
                         <linearGradient id="grad-review" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#3b82f6" /><stop offset="100%" stopColor="#93c5fd" /></linearGradient>
+                        <linearGradient id="grad-revisi" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#f97316" /><stop offset="100%" stopColor="#fdba74" /></linearGradient>
                         <linearGradient id="grad-fisik" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#f59e0b" /><stop offset="100%" stopColor="#fcd34d" /></linearGradient>
                         <linearGradient id="grad-cair" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#6ee7b7" /></linearGradient>
                         <linearGradient id="grad-evidence" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#c4b5fd" /></linearGradient>
@@ -531,7 +535,7 @@ export default function App() {
                         ))}
                       </Pie>
                       <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }} />
-                      <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12.5px', paddingTop: '10px' }} />
+                      <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '5px' }} />
                     </PieChart>
                   </ResponsiveContainer>
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none', marginTop: '-18px' }}>
@@ -542,7 +546,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div className="tc" style={{ height: '380px', display: 'flex', flexDirection: 'column', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+              <div className="tc" style={{ height: '440px', display: 'flex', flexDirection: 'column', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                 <div className="tc-top" style={{ borderBottom: 'none', paddingBottom: '0' }}>
                   <div className="tc-h" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#0f172a' }}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
@@ -742,12 +746,28 @@ export default function App() {
               <div className="ig">
                 <div className="ii"><div className="ik">ID</div><div className="iv" style={{ fontWeight: 600, color: 'var(--t2)', fontSize: '13.5px' }}>{selectedProposal.kode_tiket}</div></div>
                 <div className="ii"><div className="ik">Status</div><div className="iv"><span className={`status ${getStatusClass(selectedProposal.status)}`}>{selectedProposal.status}</span></div></div>
+                {selectedProposal.revisi_deadline && (
+                  <div className="ii" style={{ gridColumn: '1 / -1' }}>
+                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '10px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c' }}>
+                      <span style={{ fontSize: '16px' }}>⚠️</span> 
+                      <div><strong style={{ fontSize: '13px' }}>Batas Pengerjaan Revisi:</strong> <span style={{ fontSize: '13px', marginLeft: '4px' }}>{new Date(selectedProposal.revisi_deadline).toLocaleString('id-ID')}</span></div>
+                    </div>
+                  </div>
+                )}
                 <div className="ii"><div className="ik">Pemohon</div><div className="iv">{selectedProposal.user?.name}</div></div>
                 <div className="ii"><div className="ik">Nomor Telepon</div><div className="iv" style={{ fontWeight: 500, color: 'var(--t2)' }}>{selectedProposal.user?.nomor_telepon || '-'}</div></div>
                 <div className="ii"><div className="ik">Kegiatan</div><div className="iv">{selectedProposal.kegiatan}</div></div>
                 <div className="ii"><div className="ik">Tgl Pelaksanaan</div><div className="iv" style={{ fontWeight: 500, color: 'var(--text)' }}>{selectedProposal.tgl_pelaksanaan}</div></div>
                 <div className="ii"><div className="ik">Jenis</div><div className="iv"><span className="tt">{selectedProposal.jenis}</span></div></div>
                 <div className="ii"><div className="ik">Dana Diajukan</div><div className="iv" style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '15px' }}>Rp {formatRupiah(selectedProposal.dana_diajukan)}</div></div>
+                {(selectedProposal.nama_bank || selectedProposal.nomor_rekening) && (
+                  <div className="ii" style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <div className="ik" style={{ marginBottom: '4px' }}>Target Pengiriman Dana (Rekening)</div>
+                    <div className="iv" style={{ fontWeight: 600, color: 'var(--text)' }}>
+                      {selectedProposal.nama_bank || '-'} — {selectedProposal.nomor_rekening || '-'}
+                    </div>
+                  </div>
+                )}
                 <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
                   <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.5px', marginBottom: '16px', textTransform: 'uppercase' }}>DOKUMEN TERLAMPIR</div>
 
@@ -809,6 +829,7 @@ export default function App() {
               <select className="inp" style={{ width: '100%', padding: '10px', marginBottom: '20px' }} value={decisionStatus} onChange={(e) => setDecisionStatus(e.target.value)}>
                 <option value="Dalam Antrean">Dalam Antrean</option>
                 <option value="Dalam Review">Dalam Review</option>
+                <option value="Revisi Proposal">Revisi Proposal</option>
                 <option value="Menunggu Fisik">Menunggu Fisik</option>
                 <option value="Dana Cair">Dana Cair</option>
                 <option value="Menunggu Evidence">Menunggu Evidence</option>
@@ -816,7 +837,7 @@ export default function App() {
                 <option value="Gagal Bayar">Gagal Bayar</option>
               </select>
 
-              {decisionStatus === 'Dalam Review' && (
+              {(decisionStatus === 'Dalam Review' || decisionStatus === 'Revisi Proposal' || decisionStatus === 'Menunggu Evidence') && (
                 <div style={{ marginBottom: '20px' }}>
                   <label className="lbl">Catatan Revisi / Pesan untuk Pemohon (Wajib jika ada revisi)</label>
                   <textarea className="inp" value={catatanRevisi} onChange={e => setCatatanRevisi(e.target.value)} rows="3" style={{ width: '100%', padding: '10px' }} placeholder="Tuliskan catatan atau instruksi perbaikan untuk proposal ini..."></textarea>

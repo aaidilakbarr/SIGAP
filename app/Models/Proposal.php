@@ -21,6 +21,9 @@ class Proposal extends Model
         'status',
         'bukti_transfer',
         'evidence_dokumen',
+        'revisi_deadline',
+        'nama_bank',
+        'nomor_rekening',
     ];
 
     public function user()
