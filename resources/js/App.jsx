@@ -240,10 +240,10 @@ export default function App() {
       const { user: dbUser, token } = res.data;
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(dbUser);
-      setActiveRole(role);
+      setActiveRole(role === 'user2' ? 'user' : role);
       fetchProposals();
 
-      if (role === 'user') setActivePage('portal');
+      if (role === 'user' || role === 'user2') setActivePage('portal');
       else setActivePage('dashboard');
     } catch (e) {
       showToast('Login failed');
@@ -348,7 +348,8 @@ export default function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button className="btn btn-p" style={{ padding: '14px', background: '#1a5e1f', borderColor: '#1a5e1f', height: '52px', fontSize: '15px' }} disabled={loading} onClick={() => handleLogin('master')}>Super Admin</button>
             <button className="btn btn-p" style={{ padding: '14px', background: '#237227', borderColor: '#237227', height: '52px', fontSize: '15px' }} disabled={loading} onClick={() => handleLogin('reviewer')}>Admin Administrator</button>
-            <button className="btn btn-d" style={{ padding: '14px', height: '52px', fontSize: '15px', color: '#1a5e1f', borderColor: '#e2e8f0', fontWeight: 700 }} disabled={loading} onClick={() => handleLogin('user')}>User / Pemohon</button>
+            <button className="btn btn-d" style={{ padding: '14px', height: '52px', fontSize: '15px', color: '#1a5e1f', borderColor: '#e2e8f0', fontWeight: 700 }} disabled={loading} onClick={() => handleLogin('user')}>User 1 / Pemohon (Ahmad)</button>
+            <button className="btn btn-d" style={{ padding: '14px', height: '52px', fontSize: '15px', color: '#1a5e1f', borderColor: '#e2e8f0', fontWeight: 700 }} disabled={loading} onClick={() => handleLogin('user2')}>User 2 / Pemohon (Siti)</button>
           </div>
           <div style={{ marginTop: '32px', fontSize: '11px', color: 'var(--t3)', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600 }}>Sistem Informasi Gerak Alur Proposal</div>
         </div>

@@ -16,7 +16,11 @@ class AuthController extends Controller
         if ($role === 'master') $dbRole = 'superadmin';
         if ($role === 'reviewer') $dbRole = 'admin';
 
-        $user = User::where('role', $dbRole)->first();
+        if ($role === 'user2') {
+            $user = User::where('email', 'user2@example.com')->first();
+        } else {
+            $user = User::where('role', $dbRole)->first();
+        }
 
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);

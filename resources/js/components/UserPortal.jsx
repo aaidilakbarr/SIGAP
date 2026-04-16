@@ -3,12 +3,12 @@ import axios from 'axios';
 import './UserPortal.css';
 
 const STATUS_STAGES = [
-  { key: 'Dalam Antrean',    label: 'Input',       desc: 'Proposal disubmit dan masuk antrean sistem.' },
-  { key: 'Dalam Review',     label: 'Review',      desc: 'Proposal sedang direview oleh pimpinan.' },
-  { key: 'Menunggu Fisik',   label: 'Fisik',       desc: 'Menunggu penyerahan berkas fisik proposal.' },
-  { key: 'Dana Cair',        label: 'Dana Cair',   desc: 'Dana telah berhasil dicairkan kepada pemohon.' },
-  { key: 'Menunggu Evidence',label: 'Upload LPJ',  desc: 'Pemohon harus mengunggah bukti/evidence.' },
-  { key: 'Selesai',          label: 'Selesai',     desc: 'Seluruh proses telah selesai dan laporan diterima.' },
+  { key: 'Dalam Antrean', label: 'Input', desc: 'Proposal disubmit dan masuk antrean sistem.' },
+  { key: 'Dalam Review', label: 'Review', desc: 'Proposal sedang direview oleh pimpinan.' },
+  { key: 'Menunggu Fisik', label: 'Fisik', desc: 'Menunggu penyerahan berkas fisik proposal.' },
+  { key: 'Dana Cair', label: 'Dana Cair', desc: 'Dana telah berhasil dicairkan kepada pemohon.' },
+  { key: 'Menunggu Evidence', label: 'Upload LPJ', desc: 'Pemohon harus mengunggah bukti/evidence.' },
+  { key: 'Selesai', label: 'Selesai', desc: 'Seluruh proses telah selesai dan laporan diterima.' },
 ];
 
 const formatRupiah = (angka) => {
@@ -18,7 +18,7 @@ const formatRupiah = (angka) => {
 
 const getStatusClass = (status) => {
   if (status === 'Menunggu Evidence' || status === 'Menunggu Verif') return 'sw';
-  if (status === 'Selesai')   return 'sd';
+  if (status === 'Selesai') return 'sd';
   if (status === 'Gagal Bayar') return 'sf';
   if (status === 'Dalam Review' || status === 'Revisi Proposal') return 'sr';
   if (status === 'Menunggu Fisik') return 'sn';
@@ -26,9 +26,9 @@ const getStatusClass = (status) => {
 };
 
 const getCardStatusClass = (status) => {
-  if (status === 'Selesai')          return 'status-done';
+  if (status === 'Selesai') return 'status-done';
   if (status === 'Menunggu Evidence' || status === 'Menunggu Verif' || status === 'Revisi Proposal') return 'status-wait';
-  if (status === 'Gagal Bayar')      return 'status-fail';
+  if (status === 'Gagal Bayar') return 'status-fail';
   return 'status-active';
 };
 
@@ -42,8 +42,8 @@ const VerticalTimeline = ({ currentStatus }) => {
   return (
     <div className="up-timeline-vertical">
       {STATUS_STAGES.map((stage, idx) => {
-        const isDone    = idx < currentIndex || currentStatus === 'Selesai';
-        const isNow     = idx === currentIndex && !isFailed;
+        const isDone = idx < currentIndex || currentStatus === 'Selesai';
+        const isNow = idx === currentIndex && !isFailed;
         const isFailStep = isFailed && idx === 3;
 
         return (
@@ -69,8 +69,8 @@ const VerticalTimeline = ({ currentStatus }) => {
 
 export default function UserPortal({ user, proposals, showToast, fetchProposals, portalTab, setPortalTab }) {
   const [selectedProposal, setSelectedProposal] = useState(null);
-  const [searchQuery, setSearchQuery]       = useState('');
-  const [newProposal, setNewProposal]       = useState({
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newProposal, setNewProposal] = useState({
     kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null, nama_bank: '', nomor_rekening: ''
   });
 
@@ -79,26 +79,26 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
     const q = searchQuery.toLowerCase();
     return !q || (
       (p.kode_tiket || '').toLowerCase().includes(q) ||
-      (p.kegiatan   || '').toLowerCase().includes(q) ||
-      (p.jenis      || '').toLowerCase().includes(q)
+      (p.kegiatan || '').toLowerCase().includes(q) ||
+      (p.jenis || '').toLowerCase().includes(q)
     );
   });
 
   // Stats counts
-  const totalCount   = proposals.length;
-  const actionCount  = proposals.filter(p => p.status === 'Menunggu Evidence' || p.status === 'Revisi Proposal').length;
-  const doneCount    = proposals.filter(p => p.status === 'Selesai').length;
+  const totalCount = proposals.length;
+  const actionCount = proposals.filter(p => p.status === 'Menunggu Evidence' || p.status === 'Revisi Proposal').length;
+  const doneCount = proposals.filter(p => p.status === 'Selesai').length;
 
   const handleCreateProposal = async () => {
     try {
       const formData = new FormData();
-      formData.append('kegiatan',        newProposal.kegiatan);
-      formData.append('jenis',           newProposal.jenis);
+      formData.append('kegiatan', newProposal.kegiatan);
+      formData.append('jenis', newProposal.jenis);
       formData.append('tgl_pelaksanaan', newProposal.tgl_pelaksanaan);
-      formData.append('dana_diajukan',   newProposal.dana_diajukan.toString().replace(/\./g, ''));
-      formData.append('catatan',         newProposal.catatan);
-      formData.append('nama_bank',       newProposal.nama_bank);
-      formData.append('nomor_rekening',  newProposal.nomor_rekening);
+      formData.append('dana_diajukan', newProposal.dana_diajukan.toString().replace(/\./g, ''));
+      formData.append('catatan', newProposal.catatan);
+      formData.append('nama_bank', newProposal.nama_bank);
+      formData.append('nomor_rekening', newProposal.nomor_rekening);
       if (newProposal.file) formData.append('file_proposal', newProposal.file);
 
       await axios.post('/api/proposals', formData);
@@ -108,7 +108,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
       setPortalTab('home');
     } catch (e) {
       let msg = 'Gagal mengajukan proposal.';
-      if (e.response?.data?.errors)  msg = Object.values(e.response.data.errors)[0][0];
+      if (e.response?.data?.errors) msg = Object.values(e.response.data.errors)[0][0];
       else if (e.response?.data?.message) msg = e.response.data.message;
       showToast(msg);
     }
@@ -422,6 +422,18 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
             </div>
           </div>
 
+          {/* Reminder / Deadline Notice */}
+          {p.revisi_deadline && (p.status === 'Revisi Proposal' || p.status === 'Menunggu Evidence') && (
+            <div style={{ margin: '20px 20px 20px 20px', background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#b91c1c' }}>
+              <span style={{ fontSize: '20px', lineHeight: '1' }}>⚠️</span>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: 700, marginBottom: '2px' }}>Pengingat Tenggat Waktu (Deadline)</div>
+                <div style={{ fontSize: '13px', opacity: 0.9 }}>Batas akhir penyelesaian: <strong>{new Date(p.revisi_deadline).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</strong></div>
+                <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Pastikan untuk melengkapi dokumen sebelum waktu habis atau proposal dapat dibatalkan otomatis.</div>
+              </div>
+            </div>
+          )}
+
           {/* Info Grid */}
           <div className="up-info-grid">
             <div className="up-info-item">
@@ -607,8 +619,8 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
     <>
       {/* Tab Content */}
       <div className="page-view active content">
-        {portalTab === 'home'   && renderHome()}
-        {portalTab === 'new'    && renderNewForm()}
+        {portalTab === 'home' && renderHome()}
+        {portalTab === 'new' && renderNewForm()}
         {portalTab === 'detail' && renderDetail()}
       </div>
 
