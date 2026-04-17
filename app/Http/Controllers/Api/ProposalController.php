@@ -13,15 +13,90 @@ class ProposalController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        
+        $query = Proposal::with(['user', 'comments.user']);
+        
         if ($user->role === 'user') {
-            $proposals = Proposal::with(['user', 'comments.user'])->where('user_id', $user->id)->get();
+            $query->where('user_id', $user->id);
+        }
+        
+        if ($request->has('search') && !empty($request->search)) {
+            $s = $request->search;
+            $query->where(function($q) use ($s) {
+                $q->where('kode_tiket', 'like', "%{$s}%")
+                  ->orWhere('kegiatan', 'like', "%{$s}%")
+                  ->orWhere('jenis', 'like', "%{$s}%")
+                  ->orWhereHas('user', function($uq) use ($s) {
+                      $uq->where('name', 'like', "%{$s}%")
+                         ->orWhere('instansi', 'like', "%{$s}%");
+                  });
+            });
+        }
+        
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->has('date_from') && !empty($request->date_from)) {
+            $query->whereDate('tgl_pelaksanaan', '>=', $request->date_from);
+        }
+        
+        if ($request->has('date_to') && !empty($request->date_to)) {
+            $query->whereDate('tgl_pelaksanaan', '<=', $request->date_to);
+        }
+        
+        $query->orderBy('created_at', 'desc');
+        
+        if ($request->has('export') && $request->export == '1') {
+            $proposals = $query->get();
         } else {
-            $proposals = Proposal::with(['user', 'comments.user'])->get();
+            $proposals = $query->paginate(10);
         }
 
         return response()->json([
             'status' => 'success',
             'data' => $proposals
+        ]);
+    }
+
+    public function getStats(Request $request)
+    {
+        $user = $request->user();
+        $query = Proposal::query();
+        if ($user->role === 'user') {
+            $query->where('user_id', $user->id);
+        }
+        
+        // Month filter for status array
+        $statusQuery = clone $query;
+        if ($request->has('month') && $request->month !== '') {
+            // MySQL month is 1-12, js month is 0-11
+            $month = intval($request->month) + 1;
+            $statusQuery->whereMonth('tgl_pelaksanaan', $month);
+        }
+        
+        $statusCounts = $statusQuery->selectRaw('status, count(*) as total')
+                                    ->groupBy('status')
+                                    ->pluck('total', 'status')
+                                    ->toArray();
+                                    
+        $monthlyCountsQuery = clone $query;
+        $monthlyData = $monthlyCountsQuery->selectRaw('MONTH(tgl_pelaksanaan) as month, count(*) as total')
+                                          ->whereNotNull('tgl_pelaksanaan')
+                                          ->groupBy('month')
+                                          ->pluck('total', 'month')
+                                          ->toArray();
+                                          
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'status_counts' => $statusCounts,
+                'monthly_counts' => $monthlyData,
+                'total_queue' => (clone $query)->where('status', '!=', 'Selesai')->count(),
+                'total_review' => (clone $query)->where('status', 'Dalam Review')->count(),
+                'total_evidence' => (clone $query)->where('status', 'Menunggu Evidence')->count(),
+                'total_selesai' => (clone $query)->where('status', 'Selesai')->count()
+            ]
         ]);
     }
 
@@ -32,7 +107,7 @@ class ProposalController extends Controller
             'jenis' => 'required|string',
             'tgl_pelaksanaan' => 'required|date',
             'dana_diajukan' => 'required|numeric',
-            'file_proposal' => 'nullable|file',
+            'file_proposal' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
             'nama_bank' => 'nullable|string',
             'nomor_rekening' => 'nullable|string'
         ]);
@@ -133,6 +208,10 @@ class ProposalController extends Controller
 
     public function uploadEvidence(Request $request, $id)
     {
+        $request->validate([
+            'evidence_dokumen' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
+        ]);
+
         $proposal = Proposal::findOrFail($id);
         
         $evidencePath = $proposal->evidence_dokumen;
@@ -159,7 +238,7 @@ class ProposalController extends Controller
     public function reuploadProposal(Request $request, $id)
     {
         $request->validate([
-            'file_proposal' => 'required|file'
+            'file_proposal' => 'required|file|mimes:pdf,doc,docx|max:10240'
         ]);
 
         $proposal = Proposal::findOrFail($id);
@@ -210,7 +289,7 @@ class ProposalController extends Controller
 
     public function getLogs()
     {
-        $logs = ActivityLog::orderBy('created_at', 'desc')->take(50)->get();
+        $logs = ActivityLog::orderBy('created_at', 'desc')->paginate(10);
         return response()->json([
             'status' => 'success',
             'data' => $logs

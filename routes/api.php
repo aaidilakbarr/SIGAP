@@ -22,6 +22,7 @@ Route::post('/test-upload', function (Illuminate\Http\Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     
+    Route::get('/proposals/stats', [ProposalController::class, 'getStats']);
     Route::get('/proposals', [ProposalController::class, 'index']);
     Route::post('/proposals', [ProposalController::class, 'store']);
     Route::put('/proposals/{id}/status', [ProposalController::class, 'updateStatus']);

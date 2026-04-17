@@ -67,14 +67,15 @@ const VerticalTimeline = ({ currentStatus }) => {
   );
 };
 
-export default function UserPortal({ user, proposals, showToast, fetchProposals, portalTab, setPortalTab }) {
+export default function UserPortal({ user, proposals, showToast, fetchProposals, portalTab, setPortalTab, totalItems, currentPage, totalPages, dashboardStats }) {
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedUploadFile, setSelectedUploadFile] = useState(null);
   const [newProposal, setNewProposal] = useState({
     kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null, nama_bank: '', nomor_rekening: ''
   });
 
-  // Filtered proposals
+  // Filtered proposals (Frontend filtering within the page, useful if they type fast)
   const filteredProposals = proposals.filter(p => {
     const q = searchQuery.toLowerCase();
     return !q || (
@@ -84,10 +85,10 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
     );
   });
 
-  // Stats counts
-  const totalCount = proposals.length;
-  const actionCount = proposals.filter(p => p.status === 'Menunggu Evidence' || p.status === 'Revisi Proposal').length;
-  const doneCount = proposals.filter(p => p.status === 'Selesai').length;
+  // Stats counts derived from backend dashboardStats
+  const totalCount = totalItems || 0;
+  const actionCount = dashboardStats ? ((dashboardStats.total_evidence || 0) + (dashboardStats.status_counts?.['Revisi Proposal'] || 0)) : proposals.filter(p => p.status === 'Menunggu Evidence' || p.status === 'Revisi Proposal').length;
+  const doneCount = dashboardStats ? (dashboardStats.total_selesai || 0) : proposals.filter(p => p.status === 'Selesai').length;
 
   const handleCreateProposal = async () => {
     try {
@@ -114,17 +115,29 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
     }
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedUploadFile(e.target.files[0]);
+    }
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedUploadFile(null);
+    const fileInputs = document.querySelectorAll('.up-upload-input');
+    fileInputs.forEach(input => input.value = '');
+  };
+
   const handleUploadEvidence = async (proposalId) => {
-    const fileInput = document.getElementById(`evidence-up-${proposalId}`);
-    if (!fileInput || fileInput.files.length === 0) {
+    if (!selectedUploadFile) {
       showToast('Pilih file terlebih dahulu!');
       return;
     }
     try {
       const formData = new FormData();
-      formData.append('evidence_dokumen', fileInput.files[0]);
+      formData.append('evidence_dokumen', selectedUploadFile);
       await axios.post(`/api/proposals/${proposalId}/upload-evidence`, formData);
       showToast('Evidence berhasil dikirim!');
+      setSelectedUploadFile(null);
       fetchProposals();
       setPortalTab('home');
     } catch (e) {
@@ -133,16 +146,16 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
   };
 
   const handleUploadProposal = async (proposalId) => {
-    const fileInput = document.getElementById(`proposal-up-${proposalId}`);
-    if (!fileInput || fileInput.files.length === 0) {
+    if (!selectedUploadFile) {
       showToast('Pilih file proposal revisi terlebih dahulu!');
       return;
     }
     try {
       const formData = new FormData();
-      formData.append('file_proposal', fileInput.files[0]);
+      formData.append('file_proposal', selectedUploadFile);
       await axios.post(`/api/proposals/${proposalId}/upload-proposal`, formData);
       showToast('Proposal revisi berhasil diunggah!');
+      setSelectedUploadFile(null);
       fetchProposals();
       setPortalTab('home');
     } catch (e) {
@@ -234,7 +247,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
             <div
               key={p.id}
               className={`up-proposal-card ${getCardStatusClass(p.status)}`}
-              onClick={() => { setSelectedProposal(p); setPortalTab('detail'); }}
+              onClick={() => { setSelectedProposal(p); setSelectedUploadFile(null); setPortalTab('detail'); }}
             >
               <div className="up-card-top">
                 <span className="up-card-id">{p.kode_tiket}</span>
@@ -266,6 +279,13 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
               </div>
             </div>
           ))}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', padding: '16px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <button className="btn btn-d btn-sm" disabled={currentPage === 1} onClick={() => fetchProposals(currentPage - 1)}>← Sebelumnya</button>
+              <span style={{ fontSize: '13px', color: 'var(--t2)', fontWeight: 500 }}>Hal {currentPage} dari {totalPages}</span>
+              <button className="btn btn-d btn-sm" disabled={currentPage === totalPages} onClick={() => fetchProposals(currentPage + 1)}>Selanjutnya →</button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -330,36 +350,76 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
               />
             </div>
             <div className="up-form-group">
-              <label className="up-form-label">Upload File Proposal (PDF)</label>
-              <input
-                className="up-form-input"
-                type="file"
-                accept="application/pdf"
-                onChange={e => setNewProposal({ ...newProposal, file: e.target.files[0] })}
-                style={{ padding: '7px 12px' }}
-              />
+              <label className="up-form-label">Upload File Proposal (PDF/DOC/DOCX) <span>*</span></label>
+              {!newProposal.file ? (
+                <>
+                  <div className="up-upload-zone" onClick={() => document.getElementById('new-proposal-file')?.click()} style={{ padding: '16px', marginBottom: '0' }}>
+                    <div className="up-upload-zone-icon" style={{ fontSize: '24px', marginBottom: '6px' }}>📎</div>
+                    <div className="up-upload-zone-text" style={{ fontSize: '13px' }}>Pilih file proposal</div>
+                    <div className="up-upload-zone-sub" style={{ fontSize: '11px' }}>PDF, DOC, DOCX — Maks. 10MB</div>
+                  </div>
+                  <input
+                    type="file"
+                    id="new-proposal-file"
+                    className="up-upload-input"
+                    accept=".pdf,.doc,.docx"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setNewProposal({ ...newProposal, file: e.target.files[0] });
+                      }
+                    }}
+                  />
+                </>
+              ) : (
+                <div className="up-file-preview" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                    <div style={{ fontSize: '20px' }}>📄</div>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>{newProposal.file.name}</div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>{(newProposal.file.size / 1024 / 1024).toFixed(2)} MB • {newProposal.file.type.split('/')[1]?.toUpperCase() || 'File'}</div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setNewProposal({ ...newProposal, file: null });
+                      const el = document.getElementById('new-proposal-file');
+                      if (el) el.value = '';
+                    }} 
+                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '16px', cursor: 'pointer', padding: '4px' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Info Rekening */}
-          <div className="up-form-row">
-            <div className="up-form-group">
-              <label className="up-form-label">Nama Bank</label>
-              <input
-                className="up-form-input"
-                value={newProposal.nama_bank}
-                onChange={e => setNewProposal({ ...newProposal, nama_bank: e.target.value })}
-                placeholder="Contoh: BCA / Mandiri / BNI"
-              />
-            </div>
-            <div className="up-form-group">
-              <label className="up-form-label">Nomor Rekening (dan Atas Nama)</label>
-              <input
-                className="up-form-input"
-                value={newProposal.nomor_rekening}
-                onChange={e => setNewProposal({ ...newProposal, nomor_rekening: e.target.value })}
-                placeholder="Contoh: 1234567890 a.n. John Doe"
-              />
+          <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#334155', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '-4px' }}>💳 Informasi Rekening Bank (Opsional)</div>
+            <div className="up-form-row">
+              <div className="up-form-group">
+                <label className="up-form-label">Nama Bank</label>
+                <input
+                  className="up-form-input"
+                  value={newProposal.nama_bank}
+                  onChange={e => setNewProposal({ ...newProposal, nama_bank: e.target.value })}
+                  placeholder="Contoh: BCA / Mandiri / BNI"
+                  style={{ background: '#fff' }}
+                />
+              </div>
+              <div className="up-form-group">
+                <label className="up-form-label">Nomor Rekening (dan Atas Nama)</label>
+                <input
+                  className="up-form-input"
+                  value={newProposal.nomor_rekening}
+                  onChange={e => setNewProposal({ ...newProposal, nomor_rekening: e.target.value })}
+                  placeholder="1234567890 a.n. John Doe"
+                  style={{ background: '#fff' }}
+                />
+              </div>
             </div>
           </div>
 
@@ -383,7 +443,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
           </button>
           <button
             className="up-btn-submit"
-            disabled={!newProposal.kegiatan || !newProposal.tgl_pelaksanaan || !newProposal.dana_diajukan}
+            disabled={!newProposal.kegiatan || !newProposal.tgl_pelaksanaan || !newProposal.dana_diajukan || !newProposal.file}
             onClick={handleCreateProposal}
           >
             Kirim Pengajuan ✓
@@ -403,7 +463,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
         <button
           className="up-btn-back"
           style={{ marginBottom: '16px' }}
-          onClick={() => { setPortalTab('home'); setSelectedProposal(null); }}
+          onClick={() => { setPortalTab('home'); setSelectedProposal(null); setSelectedUploadFile(null); }}
         >
           ← Kembali
         </button>
@@ -538,21 +598,43 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
                   <span className="up-notice-icon">⚠️</span>
                   <span>Proposal Anda memerlukan revisi. Silakan unggah proposal baru yang sudah diperbaiki.</span>
                 </div>
-                <div className="up-upload-zone" onClick={() => document.getElementById(`proposal-up-${p.id}`)?.click()}>
-                  <div className="up-upload-zone-icon">📎</div>
-                  <div className="up-upload-zone-text">Ketuk untuk pilih file proposal baru</div>
-                  <div className="up-upload-zone-sub">PDF — Maks. 10MB</div>
-                </div>
-                <input
-                  type="file"
-                  id={`proposal-up-${p.id}`}
-                  className="up-upload-input"
-                  accept=".pdf"
-                  style={{ display: 'none' }}
-                />
+                
+                {!selectedUploadFile ? (
+                  <>
+                    <div className="up-upload-zone" onClick={() => document.getElementById(`proposal-up-${p.id}`)?.click()}>
+                      <div className="up-upload-zone-icon">📎</div>
+                      <div className="up-upload-zone-text">Ketuk untuk pilih file proposal baru</div>
+                      <div className="up-upload-zone-sub">PDF, DOC, DOCX — Maks. 10MB</div>
+                    </div>
+                    <input
+                      type="file"
+                      id={`proposal-up-${p.id}`}
+                      className="up-upload-input"
+                      accept=".pdf,.doc,.docx"
+                      style={{ display: 'none' }}
+                      onChange={handleFileChange}
+                    />
+                  </>
+                ) : (
+                  <div className="up-file-preview" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                      <div style={{ fontSize: '24px' }}>📄</div>
+                      <div style={{ overflow: 'hidden' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{selectedUploadFile.name}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>{(selectedUploadFile.size / 1024 / 1024).toFixed(2)} MB • {selectedUploadFile.type.split('/')[1]?.toUpperCase() || 'File'}</div>
+                      </div>
+                    </div>
+                    <button onClick={removeSelectedFile} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '18px', cursor: 'pointer', padding: '4px' }}>
+                      ✕
+                    </button>
+                  </div>
+                )}
+
                 <button
                   className="up-submit-evidence-btn"
                   onClick={() => handleUploadProposal(p.id)}
+                  disabled={!selectedUploadFile}
+                  style={{ opacity: !selectedUploadFile ? 0.6 : 1, cursor: !selectedUploadFile ? 'not-allowed' : 'pointer' }}
                 >
                   📤 Upload Proposal Revisi
                 </button>
@@ -565,21 +647,43 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
                   <span className="up-notice-icon">⚠️</span>
                   <span>Status Anda memerlukan tindakan. Unggah dokumen LPJ sebelum batas waktu yang tertera.</span>
                 </div>
-                <div className="up-upload-zone" onClick={() => document.getElementById(`evidence-up-${p.id}`)?.click()}>
-                  <div className="up-upload-zone-icon">📎</div>
-                  <div className="up-upload-zone-text">Ketuk untuk pilih file</div>
-                  <div className="up-upload-zone-sub">PDF, JPG, PNG — Maks. 10MB</div>
-                </div>
-                <input
-                  type="file"
-                  id={`evidence-up-${p.id}`}
-                  className="up-upload-input"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  style={{ display: 'none' }}
-                />
+
+                {!selectedUploadFile ? (
+                  <>
+                    <div className="up-upload-zone" onClick={() => document.getElementById(`evidence-up-${p.id}`)?.click()}>
+                      <div className="up-upload-zone-icon">📎</div>
+                      <div className="up-upload-zone-text">Ketuk untuk pilih file</div>
+                      <div className="up-upload-zone-sub">PDF, DOC, JPG, PNG — Maks. 10MB</div>
+                    </div>
+                    <input
+                      type="file"
+                      id={`evidence-up-${p.id}`}
+                      className="up-upload-input"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      style={{ display: 'none' }}
+                      onChange={handleFileChange}
+                    />
+                  </>
+                ) : (
+                  <div className="up-file-preview" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                      <div style={{ fontSize: '24px' }}>📄</div>
+                      <div style={{ overflow: 'hidden' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{selectedUploadFile.name}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>{(selectedUploadFile.size / 1024 / 1024).toFixed(2)} MB • {selectedUploadFile.type.split('/')[1]?.toUpperCase() || 'File'}</div>
+                      </div>
+                    </div>
+                    <button onClick={removeSelectedFile} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '18px', cursor: 'pointer', padding: '4px' }}>
+                      ✕
+                    </button>
+                  </div>
+                )}
+
                 <button
                   className="up-submit-evidence-btn"
                   onClick={() => handleUploadEvidence(p.id)}
+                  disabled={!selectedUploadFile}
+                  style={{ opacity: !selectedUploadFile ? 0.6 : 1, cursor: !selectedUploadFile ? 'not-allowed' : 'pointer' }}
                 >
                   📤 Upload Dokumen LPJ / Evidence
                 </button>
@@ -628,7 +732,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
       <nav className="user-bottom-nav" role="navigation" aria-label="User navigation">
         <div
           className={`ubn-item ${portalTab === 'home' ? 'active' : ''}`}
-          onClick={() => { setPortalTab('home'); setSelectedProposal(null); }}
+          onClick={() => { setPortalTab('home'); setSelectedProposal(null); setSelectedUploadFile(null); }}
           id="ubn-home"
         >
           <span className="ubn-icon">🏠</span>
@@ -650,6 +754,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
             if (selectedProposal) setPortalTab('detail');
             else if (proposals.length > 0) {
               setSelectedProposal(proposals[0]);
+              setSelectedUploadFile(null);
               setPortalTab('detail');
             }
           }}

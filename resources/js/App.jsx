@@ -64,6 +64,28 @@ const renderTimeline = (currentStatus) => {
 };
 
 export default function App() {
+
+
+  const renderPagination = (currPage, totPage, handleFetch) => {
+    if (totPage <= 1) return null;
+    return (
+      <div className="tc-pagination">
+        <span className="tc-pag-info">Halaman <strong>{currPage}</strong> dari <strong>{totPage}</strong></span>
+        <div className="tc-pag-actions">
+          <button className="tc-pag-btn" disabled={currPage === 1} onClick={() => handleFetch(currPage - 1)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span style={{ marginLeft: '4px' }}>Sebelumnya</span>
+          </button>
+          <button className="tc-pag-btn" disabled={currPage === totPage} onClick={() => handleFetch(currPage + 1)}>
+            <span style={{ marginRight: '4px' }}>Selanjutnya</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+
   const [activePage, setActivePage] = useState('dashboard');
   const [activeRole, setActiveRole] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
@@ -72,7 +94,13 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [proposals, setProposals] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [dashboardStats, setDashboardStats] = useState(null);
   const [logs, setLogs] = useState([]);
+  const [logsCurrentPage, setLogsCurrentPage] = useState(1);
+  const [logsTotalPages, setLogsTotalPages] = useState(1);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState(null);
@@ -92,19 +120,12 @@ export default function App() {
   const [filterDateTo, setFilterDateTo] = useState('');
   const [chartFilterMonth, setChartFilterMonth] = useState('');
 
-  const filteredProposals = proposals.filter(p => {
-    const q = searchQuery.toLowerCase();
-    const matchSearch = !q || (
-      (p.kode_tiket || '').toLowerCase().includes(q) ||
-      (p.user?.name || '').toLowerCase().includes(q) ||
-      (p.kegiatan || '').toLowerCase().includes(q) ||
-      (p.jenis || '').toLowerCase().includes(q)
-    );
-    const matchStatus = !filterStatus || p.status === filterStatus;
-    const matchDateFrom = !filterDateFrom || p.tgl_pelaksanaan >= filterDateFrom;
-    const matchDateTo = !filterDateTo || p.tgl_pelaksanaan <= filterDateTo;
-    return matchSearch && matchStatus && matchDateFrom && matchDateTo;
-  });
+  const filteredProposals = proposals; // Filtered in backend
+
+  // Trigger fetch when filters change
+  useEffect(() => {
+    if (activeRole) fetchProposals(1);
+  }, [searchQuery, filterStatus, filterDateFrom, filterDateTo]);
 
   const renderSearchBar = (showStatus = true, showDate = true) => (
     <div className="search-filter-bar">
@@ -139,7 +160,7 @@ export default function App() {
       )}
       {(searchQuery || filterStatus || filterDateFrom || filterDateTo) && (
         <>
-          <span className="filter-count">{filteredProposals.length} dari {proposals.length} data</span>
+          <span className="filter-count">Menampilkan {proposals.length} dari total {totalItems} data</span>
           <button className="btn btn-d btn-sm filter-reset" onClick={() => { setSearchQuery(''); setFilterStatus(''); setFilterDateFrom(''); setFilterDateTo(''); }}>✕ Reset</button>
         </>
       )}
@@ -147,16 +168,9 @@ export default function App() {
   );
 
   const chartDataStatus = useMemo(() => {
-    const counts = {};
-    const filteredForChart = chartFilterMonth === ''
-      ? proposals
-      : proposals.filter(p => p.tgl_pelaksanaan && new Date(p.tgl_pelaksanaan).getMonth() === parseInt(chartFilterMonth));
-
-    filteredForChart.forEach(p => {
-      counts[p.status] = (counts[p.status] || 0) + 1;
-    });
-    return Object.keys(counts).map(key => ({ name: key, value: counts[key] }));
-  }, [proposals, chartFilterMonth]);
+    if (!dashboardStats) return [];
+    return Object.keys(dashboardStats.status_counts).map(key => ({ name: key, value: dashboardStats.status_counts[key] }));
+  }, [dashboardStats]);
 
   const CHART_COLORS = {
     'Dalam Antrean': 'url(#grad-antrean)',
@@ -171,65 +185,49 @@ export default function App() {
   };
 
   const chartDataMonthly = useMemo(() => {
+    if (!dashboardStats) return [];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-    const data = months.map(m => ({ name: m, total: 0 }));
-
-    const filteredForChart = chartFilterMonth === ''
-      ? proposals
-      : proposals.filter(p => p.tgl_pelaksanaan && new Date(p.tgl_pelaksanaan).getMonth() === parseInt(chartFilterMonth));
-
-    filteredForChart.forEach(p => {
-      if (p.tgl_pelaksanaan) {
-        const date = new Date(p.tgl_pelaksanaan);
-        const monthIndex = date.getMonth();
-        if (monthIndex >= 0 && monthIndex < 12) {
-          data[monthIndex].total += 1;
-        }
-      }
-    });
+    const data = months.map((m, idx) => ({ name: m, total: dashboardStats.monthly_counts[idx + 1] || 0 }));
     return data;
-  }, [proposals, chartFilterMonth]);
+  }, [dashboardStats]);
 
   const showToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 3000);
   };
 
-  const handleExportCSV = (data, filename) => {
-    if (data.length === 0) {
-      showToast('Tidak ada data untuk diekspor');
-      return;
+  const handleExportCSV = async (filename) => {
+    try {
+      const q = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+      const fStatus = filterStatus ? `&status=${encodeURIComponent(filterStatus)}` : '';
+      const fDateF = filterDateFrom ? `&date_from=${encodeURIComponent(filterDateFrom)}` : '';
+      const fDateT = filterDateTo ? `&date_to=${encodeURIComponent(filterDateTo)}` : '';
+      const res = await axios.get(`/api/proposals?export=1${q}${fStatus}${fDateF}${fDateT}`);
+      const data = res.data.data;
+      if (!data || data.length === 0) {
+        showToast('Tidak ada data untuk diekspor');
+        return;
+      }
+      const headers = ['Kode Tiket', 'Pemohon', 'Instansi', 'Kegiatan', 'Jenis', 'Tanggal Pelaksanaan', 'Dana Diajukan (Rp)', 'Status', 'Nama Bank', 'Nomor Rekening'];
+      const csvContent = [
+        headers.join(','),
+        ...data.map(p => {
+          const row = [ p.kode_tiket, p.user?.name || '', p.user?.instansi || '', p.kegiatan, p.jenis, p.tgl_pelaksanaan, p.dana_diajukan, p.status, p.nama_bank || '', p.nomor_rekening || '' ];
+          return row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
+        })
+      ].join('\n');
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Data berhasil diekspor ke CSV!');
+    } catch (e) {
+      showToast('Gagal mengekspor data');
     }
-
-    const headers = ['Kode Tiket', 'Pemohon', 'Instansi', 'Kegiatan', 'Jenis', 'Tanggal Pelaksanaan', 'Dana Diajukan (Rp)', 'Status', 'Nama Bank', 'Nomor Rekening'];
-    const csvContent = [
-      headers.join(','),
-      ...data.map(p => {
-        const row = [
-          p.kode_tiket,
-          p.user?.name || '',
-          p.user?.instansi || '',
-          p.kegiatan,
-          p.jenis,
-          p.tgl_pelaksanaan,
-          p.dana_diajukan,
-          p.status,
-          p.nama_bank || '',
-          p.nomor_rekening || ''
-        ];
-        return row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
-      })
-    ].join('\n');
-
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('Data berhasil diekspor ke CSV!');
   };
 
   const handleLogin = async (role) => {
@@ -259,25 +257,47 @@ export default function App() {
     setActivePage('dashboard');
   };
 
-  const fetchProposals = async () => {
+  const fetchStats = async () => {
     try {
-      const res = await axios.get('/api/proposals');
-      setProposals(res.data.data);
+      const q = chartFilterMonth ? `?month=${chartFilterMonth}` : '';
+      const res = await axios.get(`/api/proposals/stats${q}`);
+      setDashboardStats(res.data.data);
     } catch (e) { }
   };
 
-  const fetchLogs = async () => {
+  const fetchProposals = async (page = 1) => {
     try {
-      const res = await axios.get('/api/logs');
-      setLogs(res.data.data);
+      const q = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+      const fStatus = filterStatus ? `&status=${encodeURIComponent(filterStatus)}` : '';
+      const fDateF = filterDateFrom ? `&date_from=${encodeURIComponent(filterDateFrom)}` : '';
+      const fDateT = filterDateTo ? `&date_to=${encodeURIComponent(filterDateTo)}` : '';
+      const res = await axios.get(`/api/proposals?page=${page}${q}${fStatus}${fDateF}${fDateT}`);
+      setProposals(res.data.data.data || []);
+      setCurrentPage(res.data.data.current_page || 1);
+      setTotalPages(res.data.data.last_page || 1);
+      setTotalItems(res.data.data.total || 0);
+    } catch (e) { }
+  };
+
+  const fetchLogs = async (page = 1) => {
+    try {
+      const res = await axios.get(`/api/logs?page=${page}`);
+      setLogs(res.data.data.data || []);
+      setLogsCurrentPage(res.data.data.current_page || 1);
+      setLogsTotalPages(res.data.data.last_page || 1);
     } catch (e) { }
   };
 
   useEffect(() => {
-    if (activePage === 'logs') {
-      fetchLogs();
+    if (activeRole) {
+      if (activePage === 'logs') {
+        fetchLogs();
+      }
+      if (activePage === 'dashboard') {
+        fetchStats();
+      }
     }
-  }, [activePage]);
+  }, [activePage, chartFilterMonth, activeRole]);
 
   const handleCreateProposal = async () => {
     try {
@@ -393,8 +413,8 @@ export default function App() {
             {(activeRole === 'master' || activeRole === 'reviewer') && (
               <>
                 <div className={`ni ${activePage === 'dashboard' ? 'active' : ''}`} onClick={() => setActivePage('dashboard')}>Dashboard</div>
-                <div className={`ni ${activePage === 'proposals' ? 'active' : ''}`} onClick={() => setActivePage('proposals')}>Manajemen Proposal <span className="ni-c">{proposals.length}</span></div>
-                <div className={`ni ${activePage === 'verification' ? 'active' : ''}`} onClick={() => setActivePage('verification')}>Verifikasi Evidence <span className="ni-c">{proposals.filter(p => p.status === 'Menunggu Verif').length}</span></div>
+                <div className={`ni ${activePage === 'proposals' ? 'active' : ''}`} onClick={() => setActivePage('proposals')}>Manajemen Proposal <span className="ni-c">{totalItems}</span></div>
+                <div className={`ni ${activePage === 'verification' ? 'active' : ''}`} onClick={() => setActivePage('verification')}>Verifikasi Evidence <span className="ni-c">{dashboardStats?.total_evidence || 0}</span></div>
               </>
             )}
             {activeRole === 'user' && (
@@ -465,7 +485,7 @@ export default function App() {
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 </div>
                 <div className="sc-l">Total Antrean</div>
-                <div className="sc-v">{proposals.filter(p => p.status !== 'Selesai').length}</div>
+                <div className="sc-v">{dashboardStats?.total_queue || 0}</div>
                 <button className="sc-btn" onClick={() => setActivePage('proposals')}>View Details</button>
               </div>
               <div className="sc">
@@ -473,7 +493,7 @@ export default function App() {
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                 </div>
                 <div className="sc-l">Menunggu Review</div>
-                <div className="sc-v">{proposals.filter(p => p.status === 'Dalam Review').length}</div>
+                <div className="sc-v">{dashboardStats?.total_review || 0}</div>
                 <button className="sc-btn" onClick={() => setActivePage('proposals')}>View Details</button>
               </div>
               <div className="sc">
@@ -481,7 +501,7 @@ export default function App() {
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                 </div>
                 <div className="sc-l">Menunggu Evidence</div>
-                <div className="sc-v">{proposals.filter(p => p.status === 'Menunggu Evidence').length}</div>
+                <div className="sc-v">{dashboardStats?.total_evidence || 0}</div>
                 <button className="sc-btn" onClick={() => setActivePage('verification')}>View Details</button>
               </div>
               <div className="sc">
@@ -489,7 +509,7 @@ export default function App() {
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
                 <div className="sc-l">Selesai</div>
-                <div className="sc-v">{proposals.filter(p => p.status === 'Selesai').length}</div>
+                <div className="sc-v">{dashboardStats?.total_selesai || 0}</div>
                 <button className="sc-btn" onClick={() => setActivePage('master')}>View Details</button>
               </div>
             </div>
@@ -587,7 +607,7 @@ export default function App() {
                       <td><div className="cn">{p.user?.name || 'N/A'}</div><div className="cs">{p.user?.instansi || '-'}</div></td>
                       <td>{p.kegiatan}</td>
                       <td style={{ fontSize: '12.5px', color: 'var(--t3)', fontWeight: 500 }}>{p.tgl_pelaksanaan}</td>
-                      <td style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>Rp {formatRupiah(p.dana_diajukan)}</td>
+                      <td style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600, whiteSpace: 'nowrap' }}>Rp {formatRupiah(p.dana_diajukan)}</td>
                       <td><span className={`status ${getStatusClass(p.status)}`}>{p.status}</span></td>
                       <td>
                         <button className="btn btn-d btn-sm" onClick={() => { setSelectedProposal(p); setActiveModal('detail'); }}>Lihat Detail</button>
@@ -596,6 +616,7 @@ export default function App() {
                   ))}
                 </tbody>
               </table>
+              {renderPagination(currentPage, totalPages, fetchProposals)}
             </div>
           </div>
         )}
@@ -607,7 +628,7 @@ export default function App() {
               <div className="tc-top">
                 <div className="tc-h">Daftar Proposal</div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button className="btn btn-success btn-sm" onClick={() => handleExportCSV(filteredProposals, 'daftar_proposal')}>
+                  <button className="btn btn-success btn-sm" onClick={() => handleExportCSV('daftar_proposal')}>
                     <span style={{ fontSize: '14px' }}>📊</span> Ekspor CSV
                   </button>
                   <button className="exp-btn" onClick={() => fetchProposals()}>Refresh Data</button>
@@ -632,6 +653,7 @@ export default function App() {
                   ))}
                 </tbody>
               </table>
+              {renderPagination(currentPage, totalPages, fetchProposals)}
             </div>
           </div>
         )}
@@ -657,6 +679,7 @@ export default function App() {
                   ))}
                 </tbody>
               </table>
+              {renderPagination(currentPage, totalPages, fetchProposals)}
             </div>
           </div>
         )}
@@ -670,6 +693,10 @@ export default function App() {
             fetchProposals={fetchProposals}
             portalTab={portalTab}
             setPortalTab={setPortalTab}
+            totalItems={totalItems}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            dashboardStats={dashboardStats}
           />
         )}
 
@@ -679,7 +706,7 @@ export default function App() {
             <div className="tc">
               <div className="tc-top">
                 <div className="tc-h">Master Database</div>
-                <button className="btn btn-success btn-sm" onClick={() => handleExportCSV(filteredProposals, 'master_database')}>
+                <button className="btn btn-success btn-sm" onClick={() => handleExportCSV('master_database')}>
                   <span style={{ fontSize: '14px' }}>📊</span> Ekspor CSV
                 </button>
               </div>
@@ -692,7 +719,7 @@ export default function App() {
                       <td className="cid">{p.kode_tiket}</td>
                       <td style={{ fontWeight: 500 }}>{p.user?.name}</td>
                       <td>{p.kegiatan}</td>
-                      <td style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text)' }}>Rp {formatRupiah(p.dana_diajukan)}</td>
+                      <td style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text)', whiteSpace: 'nowrap' }}>Rp {formatRupiah(p.dana_diajukan)}</td>
                       <td><span className={`status ${getStatusClass(p.status)}`}>{p.status}</span></td>
                       <td className="ract">
                         <button className="btn btn-d btn-sm" onClick={() => { setSelectedProposal(p); setActiveModal('detail'); }}>Lihat Detail</button>
@@ -701,6 +728,7 @@ export default function App() {
                   ))}
                 </tbody>
               </table>
+              {renderPagination(currentPage, totalPages, fetchProposals)}
             </div>
           </div>
         )}
@@ -733,6 +761,7 @@ export default function App() {
                   )}
                 </tbody>
               </table>
+              {renderPagination(currentPage, totalPages, fetchProposals)}
             </div>
           </div>
         )}
