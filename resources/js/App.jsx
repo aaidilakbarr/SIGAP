@@ -854,46 +854,65 @@ export default function App() {
         <div className="overlay open" onClick={(e) => { if (e.target.className.includes('overlay')) setActiveModal(null); }}>
           <div className="modal">
             <div className="mh"><div className="mt">Ubah Status Proposal</div><button className="cx" onClick={() => setActiveModal(null)}>&#x2715;</button></div>
-            <div className="mb">
-              <p style={{ marginBottom: '10px' }}>Pilih status baru yang akan diterapkan pada proposal <strong>{selectedProposal.kode_tiket}</strong>.</p>
-              <select className="inp" style={{ width: '100%', padding: '10px', marginBottom: '20px' }} value={decisionStatus} onChange={(e) => setDecisionStatus(e.target.value)}>
-                <option value="Dalam Antrean">Dalam Antrean</option>
-                <option value="Dalam Review">Dalam Review</option>
-                <option value="Revisi Proposal">Revisi Proposal</option>
-                <option value="Menunggu Fisik">Menunggu Fisik</option>
-                <option value="Dana Cair">Dana Cair</option>
-                <option value="Menunggu Evidence">Menunggu Evidence</option>
-                <option value="Selesai">Selesai</option>
-                <option value="Gagal Bayar">Gagal Bayar</option>
-              </select>
+            <div className="mb" style={{ padding: '24px' }}>
+              <div style={{ marginBottom: '24px', background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ background: '#e0f2fe', color: '#0284c7', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '14px', marginBottom: '4px' }}>Ubah Status Proposal</div>
+                  <div style={{ color: '#64748b', fontSize: '13px', lineHeight: '1.5' }}>Pilih status baru yang akan diterapkan pada proposal dengan ID <strong style={{ color: '#0f172a' }}>{selectedProposal.kode_tiket}</strong>.</div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label className="lbl" style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: 'var(--text)' }}>Status Baru</label>
+                <div style={{ position: 'relative' }}>
+                  <select className="inp" style={{ width: '100%', padding: '12px 16px', fontSize: '15px', color: 'var(--text)', backgroundColor: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', appearance: 'none', cursor: 'pointer', outline: 'none', transition: 'border-color 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} value={decisionStatus} onChange={(e) => setDecisionStatus(e.target.value)}>
+                    <option value="Dalam Antrean">Dalam Antrean</option>
+                    <option value="Dalam Review">Dalam Review</option>
+                    <option value="Revisi Proposal">Revisi Proposal</option>
+                    <option value="Menunggu Fisik">Menunggu Fisik</option>
+                    <option value="Dana Cair">Dana Cair</option>
+                    <option value="Menunggu Evidence">Menunggu Evidence</option>
+                    <option value="Selesai">Selesai</option>
+                    <option value="Gagal Bayar">Gagal Bayar</option>
+                  </select>
+                  <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#64748b' }}>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+              </div>
 
               {(decisionStatus === 'Dalam Review' || decisionStatus === 'Revisi Proposal' || decisionStatus === 'Menunggu Evidence') && (
-                <div style={{ marginBottom: '20px' }}>
-                  <label className="lbl">Catatan Revisi / Pesan untuk Pemohon (Wajib jika ada revisi)</label>
-                  <textarea className="inp" value={catatanRevisi} onChange={e => setCatatanRevisi(e.target.value)} rows="3" style={{ width: '100%', padding: '10px' }} placeholder="Tuliskan catatan atau instruksi perbaikan untuk proposal ini..."></textarea>
+                <div style={{ marginBottom: '24px' }}>
+                  <label className="lbl" style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: 'var(--text)' }}>Catatan Revisi / Pesan <span style={{ color: '#ef4444' }}>*</span></label>
+                  <textarea className="inp" value={catatanRevisi} onChange={e => setCatatanRevisi(e.target.value)} rows="3" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', resize: 'vertical' }} placeholder="Tuliskan catatan atau instruksi perbaikan..."></textarea>
                 </div>
               )}
 
               {decisionStatus === 'Dana Cair' && (
-                <div style={{ marginBottom: '20px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                  <label className="lbl" style={{ color: '#0ea5e9' }}>Upload Bukti Pengiriman Dana (*.PDF, Max 5MB)</label>
-                  <input type="file" className="inp" accept="application/pdf" onChange={e => setUploadFile(e.target.files[0])} style={{ width: '100%', marginTop: '8px' }} />
+                <div style={{ marginBottom: '24px', padding: '16px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px' }}>
+                  <label className="lbl" style={{ color: '#0369a1', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Upload Bukti Pengiriman Dana (*.PDF, Max 5MB)</label>
+                  <input type="file" className="inp" accept="application/pdf" onChange={e => setUploadFile(e.target.files[0])} style={{ width: '100%', padding: '10px', background: '#fff', border: '1px dashed #7dd3fc', borderRadius: '6px' }} />
                 </div>
               )}
 
-              <button className="btn btn-p" disabled={decisionStatus === 'Dana Cair' && !uploadFile && selectedProposal.status !== 'Dana Cair'} onClick={() => {
-                if (decisionStatus === 'Dana Cair' && uploadFile) {
-                  const formData = new FormData();
-                  formData.append('bukti_transfer', uploadFile);
-                  axios.post(`/api/proposals/${selectedProposal.id}/upload-bukti`, formData).then(() => {
-                    showToast('Bukti transfer berhasil diupload dan status diperbarui!');
-                    fetchProposals();
-                    setActiveModal(null);
-                  }).catch(e => showToast('Gagal upload bukti transfer (Pastikan format PDF Max 5MB)'));
-                } else {
-                  handleUpdateStatus(selectedProposal.id, decisionStatus, catatanRevisi);
-                }
-              }}>Simpan Status</button>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--line)' }}>
+                <button className="btn btn-p" style={{ padding: '12px 32px', fontSize: '15px', fontWeight: 600, borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }} disabled={decisionStatus === 'Dana Cair' && !uploadFile && selectedProposal.status !== 'Dana Cair'} onClick={() => {
+                  if (decisionStatus === 'Dana Cair' && uploadFile) {
+                    const formData = new FormData();
+                    formData.append('bukti_transfer', uploadFile);
+                    axios.post(`/api/proposals/${selectedProposal.id}/upload-bukti`, formData).then(() => {
+                      showToast('Bukti transfer berhasil diupload dan status diperbarui!');
+                      fetchProposals();
+                      setActiveModal(null);
+                    }).catch(e => showToast('Gagal upload bukti transfer (Pastikan format PDF Max 5MB)'));
+                  } else {
+                    handleUpdateStatus(selectedProposal.id, decisionStatus, catatanRevisi);
+                  }
+                }}>Simpan Status</button>
+              </div>
             </div>
           </div>
         </div>
