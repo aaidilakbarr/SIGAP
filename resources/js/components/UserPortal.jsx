@@ -67,7 +67,7 @@ const VerticalTimeline = ({ currentStatus }) => {
   );
 };
 
-export default function UserPortal({ user, proposals, showToast, fetchProposals, portalTab, setPortalTab, totalItems, currentPage, totalPages, dashboardStats }) {
+export default function UserPortal({ user, proposals, showToast, fetchProposals, portalTab, setPortalTab, totalItems, currentPage, totalPages, dashboardStats, sidebarOpen }) {
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUploadFile, setSelectedUploadFile] = useState(null);
@@ -729,7 +729,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
       </div>
 
       {/* Bottom Navigation Bar (mobile) */}
-      <nav className="user-bottom-nav" role="navigation" aria-label="User navigation">
+      <nav className="user-bottom-nav" role="navigation" aria-label="User navigation" style={{ display: sidebarOpen ? 'none' : '' }}>
         <div
           className={`ubn-item ${portalTab === 'home' ? 'active' : ''}`}
           onClick={() => { setPortalTab('home'); setSelectedProposal(null); setSelectedUploadFile(null); }}

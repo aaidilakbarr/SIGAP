@@ -8,6 +8,7 @@ import UserPortal from './components/UserPortal';
 
 // Bypass ngrok browser warning for API requests
 axios.defaults.headers.common['ngrok-skip-browser-warning'] = '69420';
+axios.defaults.baseURL = window.APP_URL || '';
 
 const TITLES = {
   dashboard: 'Dashboard',
@@ -122,10 +123,10 @@ export default function App() {
 
   const filteredProposals = proposals; // Filtered in backend
 
-  // Trigger fetch when filters change
+  // Trigger fetch when filters or page change
   useEffect(() => {
     if (activeRole) fetchProposals(1);
-  }, [searchQuery, filterStatus, filterDateFrom, filterDateTo]);
+  }, [searchQuery, filterStatus, filterDateFrom, filterDateTo, activePage]);
 
   const renderSearchBar = (showStatus = true, showDate = true) => (
     <div className="search-filter-bar">
@@ -233,7 +234,6 @@ export default function App() {
   const handleLogin = async (role) => {
     try {
       setLoading(true);
-      axios.defaults.baseURL = "http://127.0.0.1:8000";
       const res = await axios.post('/api/login', { role });
       const { user: dbUser, token } = res.data;
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -268,7 +268,9 @@ export default function App() {
   const fetchProposals = async (page = 1) => {
     try {
       const q = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
-      const fStatus = filterStatus ? `&status=${encodeURIComponent(filterStatus)}` : '';
+      let s = filterStatus;
+      if (activePage === 'verification') s = 'Menunggu Verif';
+      const fStatus = s ? `&status=${encodeURIComponent(s)}` : '';
       const fDateF = filterDateFrom ? `&date_from=${encodeURIComponent(filterDateFrom)}` : '';
       const fDateT = filterDateTo ? `&date_to=${encodeURIComponent(filterDateTo)}` : '';
       const res = await axios.get(`/api/proposals?page=${page}${q}${fStatus}${fDateF}${fDateT}`);
@@ -662,11 +664,17 @@ export default function App() {
         {activePage === 'verification' && (
           <div className="page-view active content" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
             <div className="tc">
-              <div className="tc-top"><div className="tc-h">Verifikasi Evidence</div></div>
+              <div className="tc-top">
+                <div className="tc-h">Verifikasi Evidence</div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button className="exp-btn" onClick={() => fetchProposals()}>Refresh Data</button>
+                </div>
+              </div>
+              {renderSearchBar(false, true)}
               <table>
                 <thead><tr><th>ID</th><th>Pemohon</th><th>Kegiatan</th><th>Dokumen Evidence</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody>
-                  {proposals.filter(p => p.status === 'Menunggu Verif').map(p => (
+                  {proposals.map(p => (
                     <tr key={p.id}>
                       <td className="cid">{p.kode_tiket}</td><td style={{ fontWeight: 500 }}>{p.user?.name}</td><td>{p.kegiatan}</td>
                       <td>{p.evidence_dokumen ? <span className="fl" onClick={() => showToast('Lihat ' + p.evidence_dokumen)}>{p.evidence_dokumen}</span> : 'Belum upload'}</td>
@@ -697,6 +705,7 @@ export default function App() {
             currentPage={currentPage}
             totalPages={totalPages}
             dashboardStats={dashboardStats}
+            sidebarOpen={sidebarOpen}
           />
         )}
 

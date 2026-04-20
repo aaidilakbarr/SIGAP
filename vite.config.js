@@ -10,4 +10,14 @@ export default defineConfig({
         }),
         react(),
     ],
+    server: {
+        host: '127.0.0.1',
+        proxy: {
+            '/api': {
+                target: 'http://admin_dashboard_laravel.test',
+                changeOrigin: true,
+                secure: false,
+            }
+        }
+    }
 });

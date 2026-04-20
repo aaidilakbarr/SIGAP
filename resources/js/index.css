@@ -737,9 +737,16 @@ tr:hover td {
 
 /* ==================== ACTION BUTTONS IN TABLE ==================== */
 .ract {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.ract .btn {
+  margin-right: 8px;
+}
+
+.ract .btn:last-child {
+  margin-right: 0;
 }
 
 /* ==================== MODALS ==================== */
