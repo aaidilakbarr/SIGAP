@@ -95,6 +95,7 @@ class ProposalController extends Controller
                 'total_queue' => (clone $query)->where('status', '!=', 'Selesai')->count(),
                 'total_review' => (clone $query)->where('status', 'Dalam Review')->count(),
                 'total_evidence' => (clone $query)->where('status', 'Menunggu Evidence')->count(),
+                'total_verif' => (clone $query)->where('status', 'Menunggu Verif')->count(),
                 'total_selesai' => (clone $query)->where('status', 'Selesai')->count()
             ]
         ]);
@@ -177,11 +178,12 @@ class ProposalController extends Controller
             $proposal->revisi_deadline = \Carbon\Carbon::now()->addDays(3);
         }
 
-        if ($request->status === 'Menunggu Evidence' && $oldStatus === 'Menunggu Verif') {
-            if ($proposal->evidence_dokumen) {
+        if ($request->status === 'Menunggu Evidence') {
+            if ($oldStatus === 'Menunggu Verif' && $proposal->evidence_dokumen) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($proposal->evidence_dokumen);
+                $proposal->evidence_dokumen = null;
             }
-            $proposal->evidence_dokumen = null;
+            // Always set deadline when requesting evidence
             $proposal->revisi_deadline = \Carbon\Carbon::now()->addDays(3);
         }
 

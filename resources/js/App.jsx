@@ -316,6 +316,7 @@ export default function App() {
       showToast('Proposal berhasil diajukan!');
       setNewProposal({ kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null });
       fetchProposals();
+      fetchStats();
       setPortalTab('home');
     } catch (e) {
       let msg = 'Gagal mengajukan proposal.';
@@ -335,6 +336,7 @@ export default function App() {
       await axios.put(`/api/proposals/${id}/status`, { status, catatan_revisi: catatan });
       showToast(`Status diubah menjadi: ${status}`);
       fetchProposals();
+      fetchStats();
       setActiveModal(null);
     } catch (e) {
       showToast('Gagal update status');
@@ -416,7 +418,7 @@ export default function App() {
               <>
                 <div className={`ni ${activePage === 'dashboard' ? 'active' : ''}`} onClick={() => setActivePage('dashboard')}>Dashboard</div>
                 <div className={`ni ${activePage === 'proposals' ? 'active' : ''}`} onClick={() => setActivePage('proposals')}>Manajemen Proposal <span className="ni-c">{totalItems}</span></div>
-                <div className={`ni ${activePage === 'verification' ? 'active' : ''}`} onClick={() => setActivePage('verification')}>Verifikasi Evidence <span className="ni-c">{dashboardStats?.total_evidence || 0}</span></div>
+                <div className={`ni ${activePage === 'verification' ? 'active' : ''}`} onClick={() => setActivePage('verification')}>Verifikasi Evidence <span className="ni-c">{dashboardStats?.total_verif || 0}</span></div>
               </>
             )}
             {activeRole === 'user' && (
@@ -502,8 +504,8 @@ export default function App() {
                 <div className="sc-icon">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                 </div>
-                <div className="sc-l">Menunggu Evidence</div>
-                <div className="sc-v">{dashboardStats?.total_evidence || 0}</div>
+                <div className="sc-l">Menunggu Verifikasi</div>
+                <div className="sc-v">{dashboardStats?.total_verif || 0}</div>
                 <button className="sc-btn" onClick={() => setActivePage('verification')}>View Details</button>
               </div>
               <div className="sc">
@@ -633,7 +635,7 @@ export default function App() {
                   <button className="btn btn-success btn-sm" onClick={() => handleExportCSV('daftar_proposal')}>
                     <span style={{ fontSize: '14px' }}>📊</span> Ekspor CSV
                   </button>
-                  <button className="exp-btn" onClick={() => fetchProposals()}>Refresh Data</button>
+                  <button className="exp-btn" onClick={() => { fetchProposals(); fetchStats(); }}>Refresh Data</button>
                 </div>
               </div>
               {renderSearchBar()}
@@ -667,7 +669,7 @@ export default function App() {
               <div className="tc-top">
                 <div className="tc-h">Verifikasi Evidence</div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button className="exp-btn" onClick={() => fetchProposals()}>Refresh Data</button>
+                  <button className="exp-btn" onClick={() => { fetchProposals(); fetchStats(); }}>Refresh Data</button>
                 </div>
               </div>
               {renderSearchBar(false, true)}
@@ -676,12 +678,16 @@ export default function App() {
                 <tbody>
                   {proposals.map(p => (
                     <tr key={p.id}>
-                      <td className="cid">{p.kode_tiket}</td><td style={{ fontWeight: 500 }}>{p.user?.name}</td><td>{p.kegiatan}</td>
-                      <td>{p.evidence_dokumen ? <span className="fl" onClick={() => showToast('Lihat ' + p.evidence_dokumen)}>{p.evidence_dokumen}</span> : 'Belum upload'}</td>
+                      <td className="cid">{p.kode_tiket}</td>
+                      <td style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{p.user?.name}</td>
+                      <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.kegiatan}>{p.kegiatan}</td>
+                      <td style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.evidence_dokumen}>
+                        {p.evidence_dokumen ? <span className="fl" onClick={() => showToast('Lihat ' + p.evidence_dokumen)}>{p.evidence_dokumen}</span> : <span style={{ color: 'var(--t3)', fontStyle: 'italic', fontSize: '13px' }}>Belum upload</span>}
+                      </td>
                       <td><span className={`status ${getStatusClass(p.status)}`}>{p.status}</span></td>
                       <td className="ract">
-                        <button className="btn btn-p btn-sm" onClick={() => handleUpdateStatus(p.id, 'Selesai')}>Verifikasi Acc</button>
-                        <button className="btn btn-d btn-sm" onClick={() => handleUpdateStatus(p.id, 'Menunggu Evidence')}>Tolak/Revisi</button>
+                        <button className="btn btn-p btn-sm" onClick={() => handleUpdateStatus(p.id, 'Selesai')} title="Verifikasi Acc">✔ Acc</button>
+                        <button className="btn btn-d btn-sm" style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleUpdateStatus(p.id, 'Menunggu Evidence')} title="Tolak / Revisi">✖ Tolak</button>
                       </td>
                     </tr>
                   ))}
