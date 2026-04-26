@@ -820,19 +820,19 @@ export default function App() {
                     {selectedProposal.file_proposal && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', borderRadius: '8px', padding: '12px 16px', border: '1px solid #d1fae5' }}>
                         <div style={{ fontWeight: 700, color: '#065f46', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>FILE PROPOSAL</div>
-                        <a href={`/storage/${selectedProposal.file_proposal}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0ea5e9', fontWeight: 500, fontSize: '13px', textDecoration: 'none' }}>Lihat File &rarr;</a>
+                        <a href={`/api/preview-file/${selectedProposal.file_proposal}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0ea5e9', fontWeight: 500, fontSize: '13px', textDecoration: 'none' }}>Lihat File &rarr;</a>
                       </div>
                     )}
                     {selectedProposal.evidence_dokumen && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fffbeb', borderRadius: '8px', padding: '12px 16px', border: '1px solid #fef3c7' }}>
                         <div style={{ fontWeight: 700, color: '#92400e', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>FILE LPJ</div>
-                        <a href={`/storage/${selectedProposal.evidence_dokumen}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0ea5e9', fontWeight: 500, fontSize: '13px', textDecoration: 'none' }}>Lihat File &rarr;</a>
+                        <a href={`/api/preview-file/${selectedProposal.evidence_dokumen}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0ea5e9', fontWeight: 500, fontSize: '13px', textDecoration: 'none' }}>Lihat File &rarr;</a>
                       </div>
                     )}
                     {selectedProposal.bukti_transfer && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0f9ff', borderRadius: '8px', padding: '12px 16px', border: '1px solid #e0f2fe' }}>
                         <div style={{ fontWeight: 700, color: '#075985', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>BUKTI PEMBAYARAN</div>
-                        <a href={`/storage/${selectedProposal.bukti_transfer}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0ea5e9', fontWeight: 500, fontSize: '13px', textDecoration: 'none' }}>Lihat File &rarr;</a>
+                        <a href={`/api/preview-file/${selectedProposal.bukti_transfer}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0ea5e9', fontWeight: 500, fontSize: '13px', textDecoration: 'none' }}>Lihat File &rarr;</a>
                       </div>
                     )}
                   </div>

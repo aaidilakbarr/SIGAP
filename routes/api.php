@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\ProposalController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::get('/preview-file/{path}', [ProposalController::class, 'previewFile'])->where('path', '.*');
+
 Route::post('/test-upload', function (Illuminate\Http\Request $request) {
     $file = $request->file('file');
     if (!$file) return 'No file';

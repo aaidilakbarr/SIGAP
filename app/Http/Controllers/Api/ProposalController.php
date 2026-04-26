@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use App\Models\Proposal;
 use App\Models\ActivityLog;
@@ -136,7 +137,8 @@ class ProposalController extends Controller
             if (!$file->isValid()) {
                 return response()->json(['message' => 'Gagal mengupload file proposal. Ukuran file mungkin terlalu besar atau format tidak didukung.'], 422);
             }
-            $path = $file->store('proposals', 'public');
+            $originalName = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('proposals', $originalName, 'public');
         }
 
         $proposal = Proposal::create([
@@ -218,7 +220,9 @@ class ProposalController extends Controller
         
         $evidencePath = $proposal->evidence_dokumen;
         if ($request->hasFile('evidence_dokumen')) {
-            $evidencePath = $request->file('evidence_dokumen')->store('evidence', 'public');
+            $evidenceFile = $request->file('evidence_dokumen');
+            $originalName = time() . '_' . $evidenceFile->getClientOriginalName();
+            $evidencePath = $evidenceFile->storeAs('evidence', $originalName, 'public');
         }
         
         $proposal->evidence_dokumen = $evidencePath;
@@ -245,7 +249,9 @@ class ProposalController extends Controller
 
         $proposal = Proposal::findOrFail($id);
         
-        $path = $request->file('file_proposal')->store('proposals', 'public');
+        $file = $request->file('file_proposal');
+        $originalName = time() . '_' . $file->getClientOriginalName();
+        $path = $file->storeAs('proposals', $originalName, 'public');
         
         $proposal->file_proposal = $path;
         $proposal->status = 'Dalam Antrean';
@@ -271,7 +277,9 @@ class ProposalController extends Controller
 
         $proposal = Proposal::findOrFail($id);
         
-        $path = $request->file('bukti_transfer')->store('bukti_transfer', 'public');
+        $file = $request->file('bukti_transfer');
+        $originalName = time() . '_' . $file->getClientOriginalName();
+        $path = $file->storeAs('bukti_transfer', $originalName, 'public');
         
         $oldStatus = $proposal->status;
         $proposal->bukti_transfer = $path;
@@ -343,5 +351,23 @@ class ProposalController extends Controller
         ]);
 
         return response()->json(['status' => 'success']);
+    }
+
+    public function previewFile($path)
+    {
+        if (!Storage::disk('public')->exists($path)) {
+            abort(404, 'File tidak ditemukan.');
+        }
+
+        $file = Storage::disk('public')->get($path);
+        $mimeType = Storage::disk('public')->mimeType($path);
+
+        // Extract original filename (strip timestamp prefix if present)
+        $basename = basename($path);
+        $originalName = preg_replace('/^\d+_/', '', $basename);
+
+        return response($file, 200)
+            ->header('Content-Type', $mimeType)
+            ->header('Content-Disposition', 'inline; filename="' . $originalName . '"');
     }
 }

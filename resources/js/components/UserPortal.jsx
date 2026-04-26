@@ -556,7 +556,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
                   <div className="up-transfer-sub">Admin telah melampirkan slip pencairan dana.</div>
                 </div>
                 <a
-                  href={`/storage/${p.bukti_transfer}`}
+                  href={`/api/preview-file/${p.bukti_transfer}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="up-transfer-link"
@@ -574,7 +574,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
               {p.file_proposal && (
                 <div className="up-doc-item" style={{ background: '#f0fdf4', borderColor: '#d1fae5' }}>
                   <div className="up-doc-item-label" style={{ color: '#065f46' }}>📄 File Proposal</div>
-                  <a href={`/storage/${p.file_proposal}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
+                  <a href={`/api/preview-file/${p.file_proposal}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
                     Lihat →
                   </a>
                 </div>
@@ -582,7 +582,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
               {p.evidence_dokumen && (
                 <div className="up-doc-item" style={{ background: '#fffbeb', borderColor: '#fef3c7' }}>
                   <div className="up-doc-item-label" style={{ color: '#92400e' }}>📋 File LPJ / Evidence</div>
-                  <a href={`/storage/${p.evidence_dokumen}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
+                  <a href={`/api/preview-file/${p.evidence_dokumen}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
                     Lihat →
                   </a>
                 </div>
