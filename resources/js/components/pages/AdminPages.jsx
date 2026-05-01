@@ -62,7 +62,9 @@ export function VerificationPage({
   filterDateFrom, setFilterDateFrom,
   filterDateTo, setFilterDateTo,
   fetchProposals, fetchStats, handleUpdateStatus, showToast,
+  setSelectedProposal, setActiveModal,
 }) {
+  const onViewDetail = (p) => { setSelectedProposal(p); setActiveModal('detail'); };
   return (
     <div className="page-view active content" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
       <div className="tc">
@@ -79,16 +81,17 @@ export function VerificationPage({
           showStatus={false} showDate={true}
         />
         <table>
-          <thead><tr><th>ID</th><th>Pemohon</th><th>Kegiatan</th><th>Dokumen Evidence</th><th>Status</th><th>Aksi</th></tr></thead>
+          <thead><tr><th>ID</th><th>Pemohon</th><th>Kegiatan</th><th>Dana (Rp)</th><th>Dokumen Evidence</th><th>Status</th><th>Aksi</th></tr></thead>
           <tbody>
             {proposals.map(p => (
               <tr key={p.id}>
-                <td className="cid">{p.kode_tiket}</td>
+                <td className="cid"><span className="fl" style={{ cursor: 'pointer' }} onClick={() => onViewDetail(p)} title="Klik untuk lihat detail proposal">{p.kode_tiket}</span></td>
                 <td style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{p.user?.name}</td>
                 <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.kegiatan}>{p.kegiatan}</td>
-                <td style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.evidence_dokumen}>
+                <td style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text)', whiteSpace: 'nowrap' }}>Rp {formatRupiah(p.dana_diajukan)}</td>
+                <td>
                   {p.evidence_dokumen
-                    ? <span className="fl" onClick={() => showToast('Lihat ' + p.evidence_dokumen)}>{p.evidence_dokumen}</span>
+                    ? <a className="fl" href={`/api/preview-file/${p.evidence_dokumen}`} target="_blank" rel="noopener noreferrer" title="Klik untuk melihat dokumen evidence">📄 Lihat Dokumen</a>
                     : <span style={{ color: 'var(--t3)', fontStyle: 'italic', fontSize: '13px' }}>Belum upload</span>
                   }
                 </td>
@@ -96,6 +99,7 @@ export function VerificationPage({
                 <td className="ract">
                   <button className="btn btn-p btn-sm" onClick={() => handleUpdateStatus(p.id, 'Selesai')} title="Verifikasi Acc">✔ Acc</button>
                   <button className="btn btn-d btn-sm" style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleUpdateStatus(p.id, 'Menunggu Evidence')} title="Tolak / Revisi">✖ Tolak</button>
+                  <button className="btn btn-d btn-sm" onClick={() => onViewDetail(p)} title="Lihat Detail Proposal">👁 Detail</button>
                 </td>
               </tr>
             ))}

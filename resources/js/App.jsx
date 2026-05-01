@@ -336,6 +336,7 @@ export default function App() {
             totalItems={totalItems}
             fetchProposals={fetchProposals} fetchStats={fetchStats}
             handleUpdateStatus={handleUpdateStatus} showToast={showToast}
+            setSelectedProposal={setSelectedProposal} setActiveModal={setActiveModal}
           />
         )}
 
