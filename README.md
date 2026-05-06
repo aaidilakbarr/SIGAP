@@ -31,7 +31,7 @@
 Ikuti langkah-langkah di bawah ini untuk menjalankan project ini di komputer lokal Anda:
 
 ### 1. Persyaratan Sistem
-- PHP >= 8.1
+- PHP >= 8.2
 - Composer
 - Node.js & NPM
 - Web Server (Laragon direkomendasikan untu Windows)
