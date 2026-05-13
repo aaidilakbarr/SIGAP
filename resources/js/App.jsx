@@ -4,34 +4,35 @@ import './index.css';
 import webIcon from './assets/icon-web.svg';
 import bannerLogo from './assets/banner.svg';
 
-import { TITLES, STATUS_STAGES } from './components/shared/utils';
+import { TITLES } from './components/shared/utils';
 import { DashboardPage } from './components/pages/DashboardPage';
 import { ProposalsPage, VerificationPage, MasterPage, LogsPage } from './components/pages/AdminPages';
 import { DetailModal, StatusModal } from './components/modals/Modals';
+import { WhatsAppButton } from './components/shared/WhatsAppButton';
 import UserPortal from './components/UserPortal';
+import { useAppContext } from './context/AppContext';
 
 // ─── Axios global config ──────────────────────────────────────────────────────
 axios.defaults.headers.common['ngrok-skip-browser-warning'] = '69420';
 axios.defaults.baseURL = window.APP_URL || '';
 
-// ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  // Navigation
-  const [activePage, setActivePage] = useState('dashboard');
-  const [activeRole, setActiveRole] = useState(null);
-  const [portalTab, setPortalTab] = useState('home');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const {
+    user, setUser,
+    activeRole, setActiveRole,
+    activePage, setActivePage,
+    sidebarOpen, setSidebarOpen,
+    toastMsg, showToast,
+    loading, setLoading,
+    handleLogout
+  } = useAppContext();
 
-  // UI state
-  const [toastMsg, setToastMsg] = useState('');
-  const [loading, setLoading] = useState(false);
+  // Local navigation/UI state
+  const [portalTab, setPortalTab] = useState('home');
   const [activeModal, setActiveModal] = useState(null);
   const [selectedProposal, setSelectedProposal] = useState(null);
 
-  // Auth
-  const [user, setUser] = useState(null);
-
-  // Data
+  // Data state
   const [proposals, setProposals] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -41,18 +42,12 @@ export default function App() {
   const [logsCurrentPage, setLogsCurrentPage] = useState(1);
   const [logsTotalPages, setLogsTotalPages] = useState(1);
 
-  // Search & filter (shared state, used by pages via props)
+  // Search & filter
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [chartFilterMonth, setChartFilterMonth] = useState('');
-
-  // ─── Helpers ────────────────────────────────────────────────────────────────
-  const showToast = (msg) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 3000);
-  };
 
   // ─── Data fetching ───────────────────────────────────────────────────────────
   const fetchStats = async () => {
@@ -96,7 +91,7 @@ export default function App() {
   useEffect(() => {
     if (!activeRole) return;
     if (activePage === 'logs')      fetchLogs();
-    if (activePage === 'dashboard') fetchStats();
+    if (activePage === 'dashboard' || activePage === 'portal') fetchStats();
   }, [activePage, chartFilterMonth, activeRole]);
 
   // ─── Action handlers ─────────────────────────────────────────────────────────
@@ -108,6 +103,12 @@ export default function App() {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(dbUser);
       setActiveRole(role === 'user2' ? 'user' : role);
+      // Reset filters on login
+      setSearchQuery('');
+      setFilterStatus('');
+      setFilterDateFrom('');
+      setFilterDateTo('');
+      setChartFilterMonth('');
       fetchProposals();
       if (role === 'user' || role === 'user2') setActivePage('portal');
       else setActivePage('dashboard');
@@ -116,13 +117,6 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    delete axios.defaults.headers.common['Authorization'];
-    setActiveRole(null);
-    setUser(null);
-    setActivePage('dashboard');
   };
 
   const handleUpdateStatus = async (id, status, catatan = '') => {
@@ -185,7 +179,6 @@ export default function App() {
     }
   };
 
-  // ─── Shared filter props (passed to pages) ───────────────────────────────────
   const filterProps = {
     searchQuery, setSearchQuery,
     filterStatus, setFilterStatus,
@@ -216,7 +209,6 @@ export default function App() {
     );
   }
 
-  // ─── Role display ────────────────────────────────────────────────────────────
   const getRoleDetails = () => {
     if (activeRole === 'master')   return { dot: 'SA', name: user?.name, role: 'Super Admin' };
     if (activeRole === 'reviewer') return { dot: 'AA', name: user?.name, role: 'Admin Administrator' };
@@ -224,7 +216,6 @@ export default function App() {
   };
   const { dot, name, role } = getRoleDetails();
 
-  // ─── Page title / subtitle ───────────────────────────────────────────────────
   const pageTitle = activePage === 'portal' && portalTab === 'new'    ? 'Ajukan Proposal Baru'
                   : activePage === 'portal' && portalTab === 'detail'  ? 'Track Progress'
                   : TITLES[activePage];
@@ -243,7 +234,6 @@ export default function App() {
       : ''
   );
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <>
       {/* Mobile sidebar overlay */}
@@ -346,6 +336,7 @@ export default function App() {
             fetchProposals={fetchProposals} portalTab={portalTab} setPortalTab={setPortalTab}
             totalItems={totalItems} currentPage={currentPage} totalPages={totalPages}
             dashboardStats={dashboardStats} sidebarOpen={sidebarOpen}
+            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
           />
         )}
 
@@ -365,6 +356,8 @@ export default function App() {
             fetchProposals={fetchLogs}
           />
         )}
+
+        <WhatsAppButton />
       </main>
 
       {/* ── Modals ──────────────────────────────────────────────────────────── */}
