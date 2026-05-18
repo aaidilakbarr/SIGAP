@@ -27,11 +27,11 @@ export function DetailModal({ proposal, activeRole, onClose, onDeleteComment, sh
             <div className="ii"><div className="ik">Tgl Pelaksanaan</div><div className="iv" style={{ fontWeight: 500, color: 'var(--text)' }}>{proposal.tgl_pelaksanaan}</div></div>
             <div className="ii"><div className="ik">Jenis</div><div className="iv"><span className="tt">{proposal.jenis}</span></div></div>
             <div className="ii"><div className="ik">Dana Diajukan</div><div className="iv" style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '15px' }}>Rp {formatRupiah(proposal.dana_diajukan)}</div></div>
-            {(proposal.nama_bank || proposal.nomor_rekening) && (
+            {(proposal.nama_bank || proposal.nomor_rekening || proposal.atas_nama) && (
               <div className="ii" style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <div className="ik" style={{ marginBottom: '4px' }}>Target Pengiriman Dana (Rekening)</div>
                 <div className="iv" style={{ fontWeight: 600, color: 'var(--text)' }}>
-                  {proposal.nama_bank || '-'} — {proposal.nomor_rekening || '-'}
+                  {proposal.nama_bank || '-'} — {proposal.nomor_rekening || '-'} {proposal.atas_nama ? `a.n. ${proposal.atas_nama}` : ''}
                 </div>
               </div>
             )}

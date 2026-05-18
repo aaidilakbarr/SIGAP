@@ -111,7 +111,8 @@ class ProposalController extends Controller
             'dana_diajukan' => 'required|numeric',
             'file_proposal' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
             'nama_bank' => 'nullable|string',
-            'nomor_rekening' => 'nullable|string'
+            'nomor_rekening' => 'nullable|string',
+            'atas_nama' => 'nullable|string'
         ]);
 
         $now = \Carbon\Carbon::now();
@@ -152,7 +153,8 @@ class ProposalController extends Controller
             'file_proposal' => $path,
             'status' => 'Dalam Antrean',
             'nama_bank' => $request->nama_bank,
-            'nomor_rekening' => $request->nomor_rekening
+            'nomor_rekening' => $request->nomor_rekening,
+            'atas_nama' => $request->atas_nama
         ]);
 
         ActivityLog::create([

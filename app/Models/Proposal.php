@@ -24,6 +24,7 @@ class Proposal extends Model
         'revisi_deadline',
         'nama_bank',
         'nomor_rekening',
+        'atas_nama',
     ];
 
     public function user()

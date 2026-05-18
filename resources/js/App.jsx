@@ -158,11 +158,11 @@ export default function App() {
       const res = await axios.get(`/api/proposals?export=1${q}${fStatus}${fDateF}${fDateT}`);
       const data = res.data.data;
       if (!data || data.length === 0) { showToast('Tidak ada data untuk diekspor'); return; }
-      const headers = ['Kode Tiket','Pemohon','Instansi','Kegiatan','Jenis','Tanggal Pelaksanaan','Dana Diajukan (Rp)','Status','Nama Bank','Nomor Rekening'];
+      const headers = ['Kode Tiket','Pemohon','Instansi','Kegiatan','Jenis','Tanggal Pelaksanaan','Dana Diajukan (Rp)','Status','Nama Bank','Nomor Rekening','Atas Nama'];
       const csvContent = [
         headers.join(','),
         ...data.map(p => {
-          const row = [p.kode_tiket, p.user?.name||'', p.user?.instansi||'', p.kegiatan, p.jenis, p.tgl_pelaksanaan, p.dana_diajukan, p.status, p.nama_bank||'', p.nomor_rekening||''];
+          const row = [p.kode_tiket, p.user?.name||'', p.user?.instansi||'', p.kegiatan, p.jenis, p.tgl_pelaksanaan, p.dana_diajukan, p.status, p.nama_bank||'', p.nomor_rekening||'', p.atas_nama||''];
           return row.map(val => `"${String(val).replace(/"/g,'""')}"`).join(',');
         }),
       ].join('\n');
@@ -293,7 +293,24 @@ export default function App() {
             {activePage === 'portal' && portalTab === 'home' && (
               <button className="btn btn-p" style={{ whiteSpace: 'nowrap' }} onClick={() => setPortalTab('new')}>+ Ajukan Baru</button>
             )}
+            <WhatsAppButton />
             <NotificationBell />
+            <button className="logout-topbar-btn" onClick={handleLogout} title="Logout / Ganti Sesi" aria-label="Logout">
+              <svg 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -359,7 +376,7 @@ export default function App() {
           />
         )}
 
-        <WhatsAppButton />
+
       </main>
 
       {/* ── Modals ──────────────────────────────────────────────────────────── */}

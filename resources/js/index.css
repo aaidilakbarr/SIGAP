@@ -1454,6 +1454,48 @@ select.inp {
   background: var(--primary-light);
 }
 
+.wa-topbar-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--t2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wa-topbar-btn:hover {
+  color: #25D366;
+  border-color: #dcfce7;
+  background: #f0fdf4;
+}
+
+.logout-topbar-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--t2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-topbar-btn:hover {
+  color: #ef4444;
+  border-color: #fee2e2;
+  background: #fef2f2;
+}
+
 .notif-badge {
   position: absolute;
   top: -4px;

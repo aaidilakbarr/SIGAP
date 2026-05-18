@@ -71,11 +71,11 @@ export const ProposalDetail = ({
               <div className="up-info-val">{p.user.nomor_telepon}</div>
             </div>
           )}
-          {(p.nama_bank || p.nomor_rekening) && (
+          {(p.nama_bank || p.nomor_rekening || p.atas_nama) && (
             <div className="up-info-item" style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
               <div className="up-info-key">Informasi Rekening</div>
               <div className="up-info-val" style={{ fontWeight: 600, color: 'var(--text)' }}>
-                {p.nama_bank || '-'} — {p.nomor_rekening || '-'}
+                {p.nama_bank || '-'} — {p.nomor_rekening || '-'} {p.atas_nama ? `a.n. ${p.atas_nama}` : ''}
               </div>
             </div>
           )}

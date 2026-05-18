@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export const ProposalForm = ({ 
   newProposal, setNewProposal, 
   handleCreateProposal, setPortalTab, 
   formatRupiah 
 }) => {
+  const [selectedBank, setSelectedBank] = useState(() => {
+    const popular = ['BCA', 'Mandiri', 'BNI', 'BRI', 'BSI', 'CIMB Niaga'];
+    if (!newProposal.nama_bank) return '';
+    if (popular.includes(newProposal.nama_bank)) return newProposal.nama_bank;
+    return 'Lainnya';
+  });
+  const [showBankInfo, setShowBankInfo] = useState(() => {
+    return !!(newProposal.nama_bank || newProposal.nomor_rekening || newProposal.atas_nama);
+  });
   return (
     <div className="up-form-wrapper">
       <div className="up-form-card">
@@ -66,10 +75,12 @@ export const ProposalForm = ({
               <label className="up-form-label">Upload File Proposal (PDF/DOC/DOCX) <span>*</span></label>
               {!newProposal.file ? (
                 <>
-                  <div className="up-upload-zone" onClick={() => document.getElementById('new-proposal-file')?.click()} style={{ padding: '16px', marginBottom: '0' }}>
-                    <div className="up-upload-zone-icon" style={{ fontSize: '24px', marginBottom: '6px' }}>📎</div>
-                    <div className="up-upload-zone-text" style={{ fontSize: '13px' }}>Pilih file proposal</div>
-                    <div className="up-upload-zone-sub" style={{ fontSize: '11px' }}>PDF, DOC, DOCX — Maks. 10MB</div>
+                  <div className="up-upload-zone" onClick={() => document.getElementById('new-proposal-file')?.click()} style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', minHeight: '44px', marginBottom: '0', borderRadius: '10px' }}>
+                    <div className="up-upload-zone-icon" style={{ fontSize: '20px', margin: '0', opacity: 0.7 }}>📎</div>
+                    <div style={{ textAlign: 'left' }}>
+                      <div className="up-upload-zone-text" style={{ margin: '0', fontSize: '13px', lineHeight: '1.2' }}>Pilih file proposal</div>
+                      <div className="up-upload-zone-sub" style={{ margin: '0', fontSize: '10.5px' }}>PDF, DOC, DOCX — Maks. 10MB</div>
+                    </div>
                   </div>
                   <input
                     type="file"
@@ -110,30 +121,77 @@ export const ProposalForm = ({
           </div>
 
           {/* Info Rekening */}
-          <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#334155', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '-4px' }}>💳 Informasi Rekening Bank (Opsional)</div>
-            <div className="up-form-row">
-              <div className="up-form-group">
-                <label className="up-form-label">Nama Bank</label>
-                <input
-                  className="up-form-input"
-                  value={newProposal.nama_bank}
-                  onChange={e => setNewProposal({ ...newProposal, nama_bank: e.target.value })}
-                  placeholder="Contoh: BCA / Mandiri / BNI"
-                  style={{ background: '#fff' }}
-                />
-              </div>
-              <div className="up-form-group">
-                <label className="up-form-label">Nomor Rekening (dan Atas Nama)</label>
-                <input
-                  className="up-form-input"
-                  value={newProposal.nomor_rekening}
-                  onChange={e => setNewProposal({ ...newProposal, nomor_rekening: e.target.value })}
-                  placeholder="1234567890 a.n. John Doe"
-                  style={{ background: '#fff' }}
-                />
-              </div>
+          <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: showBankInfo ? '16px' : '0' }}>
+            <div 
+              style={{ fontSize: '13px', fontWeight: 700, color: '#334155', borderBottom: showBankInfo ? '1px solid #e2e8f0' : 'none', paddingBottom: showBankInfo ? '8px' : '0', marginBottom: '-4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+              onClick={() => setShowBankInfo(!showBankInfo)}
+            >
+              <span>💳 Informasi Rekening Bank (Opsional)</span>
+              <span style={{ fontSize: '12px', color: '#64748b', transition: 'transform 0.2s ease', transform: showBankInfo ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
             </div>
+            {showBankInfo && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
+                <div className="up-form-group">
+                  <label className="up-form-label">Nama Bank</label>
+                  <select
+                    className="up-form-input"
+                    value={selectedBank}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setSelectedBank(val);
+                      if (val !== 'Lainnya') {
+                        setNewProposal({ ...newProposal, nama_bank: val });
+                      } else {
+                        setNewProposal({ ...newProposal, nama_bank: '' });
+                      }
+                    }}
+                    style={{ background: '#fff', cursor: 'pointer', appearance: 'auto' }}
+                  >
+                    <option value="">-- Pilih Bank --</option>
+                    <option value="BCA">BCA (Bank Central Asia)</option>
+                    <option value="Mandiri">Mandiri</option>
+                    <option value="BNI">BNI (Bank Negara Indonesia)</option>
+                    <option value="BRI">BRI (Bank Rakyat Indonesia)</option>
+                    <option value="BSI">BSI (Bank Syariah Indonesia)</option>
+                    <option value="CIMB Niaga">CIMB Niaga</option>
+                    <option value="Lainnya">Lainnya (Tulis Manual)</option>
+                  </select>
+                </div>
+
+                {selectedBank === 'Lainnya' && (
+                  <div className="up-form-group" style={{ marginTop: '-8px' }}>
+                    <label className="up-form-label" style={{ fontSize: '11.5px', color: 'var(--t3)' }}>Masukkan Nama Bank Lainnya</label>
+                    <input
+                      className="up-form-input"
+                      value={newProposal.nama_bank}
+                      onChange={e => setNewProposal({ ...newProposal, nama_bank: e.target.value })}
+                      placeholder="Masukkan nama bank Anda..."
+                      style={{ background: '#fff' }}
+                    />
+                  </div>
+                )}
+                <div className="up-form-group">
+                  <label className="up-form-label">Nomor Rekening</label>
+                  <input
+                    className="up-form-input"
+                    value={newProposal.nomor_rekening}
+                    onChange={e => setNewProposal({ ...newProposal, nomor_rekening: e.target.value })}
+                    placeholder="Contoh: 123456789"
+                    style={{ background: '#fff' }}
+                  />
+                </div>
+                <div className="up-form-group">
+                  <label className="up-form-label">Atas Nama</label>
+                  <input
+                    className="up-form-input"
+                    value={newProposal.atas_nama || ''}
+                    onChange={e => setNewProposal({ ...newProposal, atas_nama: e.target.value })}
+                    placeholder="Contoh: John Doe"
+                    style={{ background: '#fff' }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Catatan */}

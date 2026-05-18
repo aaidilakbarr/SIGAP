@@ -31,7 +31,7 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [selectedUploadFile, setSelectedUploadFile] = useState(null);
   const [newProposal, setNewProposal] = useState({
-    kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null, nama_bank: '', nomor_rekening: ''
+    kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null, nama_bank: '', nomor_rekening: '', atas_nama: ''
   });
 
   // Use the proposals from props directly (backend already filtered them)
@@ -52,11 +52,12 @@ export default function UserPortal({ user, proposals, showToast, fetchProposals,
       formData.append('catatan', newProposal.catatan);
       formData.append('nama_bank', newProposal.nama_bank);
       formData.append('nomor_rekening', newProposal.nomor_rekening);
+      formData.append('atas_nama', newProposal.atas_nama);
       if (newProposal.file) formData.append('file_proposal', newProposal.file);
 
       await axios.post('/api/proposals', formData);
       showToast('Proposal berhasil diajukan!');
-      setNewProposal({ kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null, nama_bank: '', nomor_rekening: '' });
+      setNewProposal({ kegiatan: '', jenis: 'Advance', tgl_pelaksanaan: '', dana_diajukan: '', catatan: '', file: null, nama_bank: '', nomor_rekening: '', atas_nama: '' });
       fetchProposals();
       setPortalTab('home');
     } catch (e) {
