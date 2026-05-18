@@ -35,4 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/proposals/comments/{id}', [ProposalController::class, 'deleteComment']);
     
     Route::get('/logs', [ProposalController::class, 'getLogs']);
+    
+    Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::post('/notifications/mark-read', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
 });

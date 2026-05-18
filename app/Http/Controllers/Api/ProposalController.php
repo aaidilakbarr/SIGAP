@@ -163,6 +163,17 @@ class ProposalController extends Controller
             'description' => "Proposal {$kode_tiket} diajukan untuk kegiatan {$request->kegiatan}."
         ]);
 
+        // Kirim notifikasi ke Admin & Super Admin
+        $admins = \App\Models\User::whereIn('role', ['admin', 'superadmin'])->get();
+        foreach ($admins as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'title' => 'Proposal Baru Diajukan',
+                'message' => "Proposal baru dengan tiket {$kode_tiket} kegiatan {$request->kegiatan} telah diajukan.",
+                'is_read' => false
+            ]);
+        }
+
         return response()->json(['status' => 'success', 'data' => $proposal]);
     }
 
@@ -207,6 +218,29 @@ class ProposalController extends Controller
             'description' => "Status proposal {$proposal->kode_tiket} diubah dari {$oldStatus} menjadi {$request->status}."
         ]);
 
+        // Kirim notifikasi ke pemohon (User)
+        $statusMsg = null;
+        if ($request->status === 'Menunggu Fisik') {
+            $statusMsg = "Proposal {$proposal->kode_tiket} berstatus Menunggu Fisik. Silakan serahkan berkas fisik.";
+        } elseif ($request->status === 'Menunggu Evidence') {
+            $statusMsg = "Proposal {$proposal->kode_tiket} berstatus Menunggu Evidence. Silakan unggah bukti pelaksanaan kegiatan.";
+        } elseif ($request->status === 'Selesai') {
+            $statusMsg = "Selamat! Proposal/LPJ {$proposal->kode_tiket} Anda telah selesai.";
+        } elseif ($request->status === 'Revisi Proposal') {
+            $statusMsg = "Proposal {$proposal->kode_tiket} membutuhkan revisi. Silakan cek catatan.";
+        } else {
+            $statusMsg = "Status proposal {$proposal->kode_tiket} Anda telah diperbarui menjadi {$request->status}.";
+        }
+
+        if ($statusMsg) {
+            \App\Models\Notification::create([
+                'user_id' => $proposal->user_id,
+                'title' => 'Update Status Proposal',
+                'message' => $statusMsg,
+                'is_read' => false
+            ]);
+        }
+
         return response()->json(['status' => 'success', 'data' => $proposal]);
     }
 
@@ -236,6 +270,25 @@ class ProposalController extends Controller
             'role' => $request->user()->role,
             'action' => 'Upload Evidence',
             'description' => "Pengguna mengunggah evidence untuk proposal {$proposal->kode_tiket}."
+        ]);
+
+        // Kirim notifikasi ke Admin & Super Admin bahwa evidence diunggah
+        $admins = \App\Models\User::whereIn('role', ['admin', 'superadmin'])->get();
+        foreach ($admins as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'title' => 'Evidence Baru Diunggah',
+                'message' => "Pengguna telah mengunggah evidence untuk proposal {$proposal->kode_tiket}.",
+                'is_read' => false
+            ]);
+        }
+
+        // Kirim notifikasi ke pemohon (User) sebagai bukti berhasil
+        \App\Models\Notification::create([
+            'user_id' => $proposal->user_id,
+            'title' => 'Evidence Berhasil Diunggah',
+            'message' => "Evidence untuk proposal {$proposal->kode_tiket} berhasil diunggah dan sedang diproses.",
+            'is_read' => false
         ]);
 
         return response()->json(['status' => 'success', 'data' => $proposal]);
@@ -292,6 +345,14 @@ class ProposalController extends Controller
             'role' => $request->user()->role,
             'action' => 'Upload Bukti Transfer',
             'description' => "Admin mengunggah bukti pengiriman dana PDF untuk {$proposal->kode_tiket}. Status dari {$oldStatus} ke Dana Cair."
+        ]);
+
+        // Kirim notifikasi ke pemohon (User) bahwa dana cair
+        \App\Models\Notification::create([
+            'user_id' => $proposal->user_id,
+            'title' => 'Dana Cair',
+            'message' => "Dana untuk proposal {$proposal->kode_tiket} telah dicairkan dan bukti transfer telah diunggah.",
+            'is_read' => false
         ]);
 
         return response()->json(['status' => 'success', 'data' => $proposal]);

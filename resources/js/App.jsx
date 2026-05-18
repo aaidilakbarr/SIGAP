@@ -11,6 +11,7 @@ import { DetailModal, StatusModal } from './components/modals/Modals';
 import { WhatsAppButton } from './components/shared/WhatsAppButton';
 import UserPortal from './components/UserPortal';
 import { useAppContext } from './context/AppContext';
+import NotificationBell from './components/shared/NotificationBell';
 
 // ─── Axios global config ──────────────────────────────────────────────────────
 axios.defaults.headers.common['ngrok-skip-browser-warning'] = '69420';
@@ -292,6 +293,7 @@ export default function App() {
             {activePage === 'portal' && portalTab === 'home' && (
               <button className="btn btn-p" style={{ whiteSpace: 'nowrap' }} onClick={() => setPortalTab('new')}>+ Ajukan Baru</button>
             )}
+            <NotificationBell />
           </div>
         </div>
 
