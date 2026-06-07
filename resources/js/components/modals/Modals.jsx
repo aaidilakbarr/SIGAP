@@ -3,8 +3,43 @@ import axios from 'axios';
 import { getStatusClass, formatRupiah, STATUS_OPTIONS } from '../shared/utils';
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-export function DetailModal({ proposal, activeRole, onClose, onDeleteComment, showToast }) {
+export function DetailModal({ proposal, activeRole, onClose, onDeleteComment, showToast, setSelectedProposal, fetchProposals }) {
+  const [catatanAdmin, setCatatanAdmin] = useState('');
+  const [generating, setGenerating] = useState(false);
+
   if (!proposal) return null;
+
+  const handleGenerateBA = async () => {
+    try {
+      setGenerating(true);
+      const res = await axios.post(`/api/proposals/${proposal.id}/berita-acara/generate`, {
+        catatan_admin: catatanAdmin
+      });
+      showToast('Berita Acara berhasil di-generate!');
+      
+      // Update selectedProposal in-place
+      if (setSelectedProposal) {
+        setSelectedProposal({
+          ...proposal,
+          berita_acara: res.data.data
+        });
+      }
+      
+      // Refresh list
+      if (fetchProposals) {
+        fetchProposals();
+      }
+    } catch (e) {
+      let msg = 'Gagal men-generate Berita Acara.';
+      if (e.response?.data?.message) {
+        msg = e.response.data.message;
+      }
+      showToast(msg);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="overlay open" onClick={(e) => { if (e.target.className.includes('overlay')) onClose(); }}>
       <div className="modal">
@@ -59,6 +94,86 @@ export function DetailModal({ proposal, activeRole, onClose, onDeleteComment, sh
                 )}
               </div>
             </div>
+
+            {proposal.status === 'Selesai' && (
+              <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.5px', marginBottom: '16px', textTransform: 'uppercase' }}>DOKUMEN BERITA ACARA</div>
+                {(() => {
+                  const ba = proposal.berita_acara || proposal.beritaAcara;
+                  if (ba) {
+                    return (
+                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '16px', borderRadius: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <div>
+                            <div style={{ fontWeight: 700, color: '#16a34a', fontSize: '13.5px' }}>Nomor: {ba.nomor_ba}</div>
+                            <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px' }}>
+                              Diterbitkan oleh: {ba.generated_by?.name || ba.generated_by_user?.name || (ba.generated_by && typeof ba.generated_by === 'object' ? ba.generated_by.name : 'Admin')}
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '11px', fontWeight: 700, background: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '20px', textTransform: 'uppercase' }}>Terbit</span>
+                        </div>
+                        {ba.catatan_admin && (
+                          <div style={{ fontSize: '12.5px', background: '#ffffff', padding: '10px 12px', borderRadius: '8px', border: '1px solid #d1fae5', color: '#1e293b', marginBottom: '14px', fontStyle: 'italic' }}>
+                            <strong>Catatan:</strong> "{ba.catatan_admin}"
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <a
+                            href={`/api/proposals/${proposal.id}/berita-acara/preview`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-d btn-sm"
+                            style={{ textDecoration: 'none', background: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            👁 Preview
+                          </a>
+                          <a
+                            href={`/api/proposals/${proposal.id}/berita-acara/download`}
+                            className="btn btn-p btn-sm"
+                            style={{ textDecoration: 'none', background: '#16a34a', borderColor: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#ffffff' }}
+                          >
+                            📥 Download
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  } else if (activeRole === 'master' || activeRole === 'reviewer' || activeRole === 'admin' || activeRole === 'superadmin') {
+                    return (
+                      <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '20px', borderRadius: '10px' }}>
+                        <div style={{ fontSize: '13.5px', color: '#475569', marginBottom: '14px', lineHeight: '1.5' }}>
+                          Dokumen Berita Acara belum dibuat. Sebagai Administrator, Anda dapat men-generate dokumen resmi untuk pengajuan ini secara otomatis.
+                        </div>
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Catatan Admin (Opsional)</label>
+                          <textarea
+                            className="inp"
+                            value={catatanAdmin}
+                            onChange={e => setCatatanAdmin(e.target.value)}
+                            placeholder="Tambahkan catatan khusus untuk dicantumkan di dokumen Berita Acara..."
+                            rows="2"
+                            style={{ width: '100%', fontSize: '13px', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', resize: 'vertical' }}
+                          />
+                        </div>
+                        <button
+                          className="btn btn-p"
+                          disabled={generating}
+                          onClick={handleGenerateBA}
+                          style={{ width: '100%', justifyContent: 'center', background: '#1a5e1f', borderColor: '#1a5e1f', fontWeight: 700, padding: '10px', fontSize: '13px', color: '#ffffff' }}
+                        >
+                          {generating ? 'Sedang Men-generate...' : '⚡ Generate Berita Acara'}
+                        </button>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic' }}>
+                        Berita Acara resmi sedang diproses oleh Administrator.
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+            )}
 
             {proposal.comments && proposal.comments.length > 0 && (
               <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--line)' }}>

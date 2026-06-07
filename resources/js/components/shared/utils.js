@@ -7,6 +7,7 @@ export const TITLES = {
   portal: 'Portal Pemohon',
   master: 'Master Database',
   logs: 'Activity Log',
+  berita_acara: 'Daftar Berita Acara',
 };
 
 export const STATUS_STAGES = [

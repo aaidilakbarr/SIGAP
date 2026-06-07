@@ -15,7 +15,7 @@ class ProposalController extends Controller
     {
         $user = $request->user();
         
-        $query = Proposal::with(['user', 'comments.user']);
+        $query = Proposal::with(['user', 'comments.user', 'beritaAcara']);
         
         if ($user->role === 'user') {
             $query->where('user_id', $user->id);

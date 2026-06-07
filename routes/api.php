@@ -4,10 +4,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProposalController;
+use App\Http\Controllers\Api\BeritaAcaraController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/preview-file/{path}', [ProposalController::class, 'previewFile'])->where('path', '.*');
+
+// Public Berita Acara Preview & Download
+Route::get('/proposals/{proposal}/berita-acara/preview', [BeritaAcaraController::class, 'preview']);
+Route::get('/proposals/{proposal}/berita-acara/download', [BeritaAcaraController::class, 'download']);
 
 Route::post('/test-upload', function (Illuminate\Http\Request $request) {
     $file = $request->file('file');
@@ -38,4 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
     Route::post('/notifications/mark-read', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+
+    // Berita Acara Routes
+    Route::post('/proposals/{proposal}/berita-acara/generate', [BeritaAcaraController::class, 'generate']);
+    Route::get('/berita-acara', [BeritaAcaraController::class, 'index']);
 });

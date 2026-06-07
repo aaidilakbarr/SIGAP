@@ -36,4 +36,9 @@ class Proposal extends Model
     {
         return $this->hasMany(ProposalComment::class);
     }
+
+    public function beritaAcara()
+    {
+        return $this->hasOne(BeritaAcara::class);
+    }
 }

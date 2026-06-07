@@ -7,6 +7,7 @@ import bannerLogo from './assets/banner.svg';
 import { TITLES } from './components/shared/utils';
 import { DashboardPage } from './components/pages/DashboardPage';
 import { ProposalsPage, VerificationPage, MasterPage, LogsPage } from './components/pages/AdminPages';
+import { BeritaAcaraListPage } from './components/pages/BeritaAcaraListPage';
 import { DetailModal, StatusModal } from './components/modals/Modals';
 import { WhatsAppButton } from './components/shared/WhatsAppButton';
 import UserPortal from './components/UserPortal';
@@ -255,6 +256,7 @@ export default function App() {
                 <div className={`ni ${activePage === 'dashboard'    ? 'active' : ''}`} onClick={() => setActivePage('dashboard')}>Dashboard</div>
                 <div className={`ni ${activePage === 'proposals'    ? 'active' : ''}`} onClick={() => setActivePage('proposals')}>Manajemen Proposal <span className="ni-c">{totalItems}</span></div>
                 <div className={`ni ${activePage === 'verification' ? 'active' : ''}`} onClick={() => setActivePage('verification')}>Verifikasi Evidence <span className="ni-c">{dashboardStats?.total_verif || 0}</span></div>
+                <div className={`ni ${activePage === 'berita_acara'  ? 'active' : ''}`} onClick={() => setActivePage('berita_acara')}>Daftar Berita Acara</div>
               </>
             )}
             {activeRole === 'user' && (
@@ -376,6 +378,10 @@ export default function App() {
           />
         )}
 
+        {activePage === 'berita_acara' && (
+          <BeritaAcaraListPage />
+        )}
+
 
       </main>
 
@@ -386,6 +392,8 @@ export default function App() {
           onClose={() => setActiveModal(null)}
           onDeleteComment={handleDeleteComment}
           showToast={showToast}
+          setSelectedProposal={setSelectedProposal}
+          fetchProposals={fetchProposals}
         />
       )}
 

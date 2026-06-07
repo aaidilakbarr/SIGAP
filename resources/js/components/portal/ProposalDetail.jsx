@@ -247,9 +247,56 @@ export const ProposalDetail = ({
           )}
 
           {p.status === 'Selesai' && (
-            <div className="up-notice success">
-              <span className="up-notice-icon">✅</span>
-              <span>Proses Selesai! Dana telah sukses dicairkan dan seluruh dokumen LPJ telah diverifikasi.</span>
+            <div>
+              <div className="up-notice success">
+                <span className="up-notice-icon">✅</span>
+                <span>Proses Selesai! Dana telah sukses dicairkan dan seluruh dokumen LPJ telah diverifikasi.</span>
+              </div>
+              
+              {(() => {
+                const ba = p.berita_acara || p.beritaAcara;
+                if (ba) {
+                  return (
+                    <div style={{ marginTop: '20px', padding: '20px', background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                      <div style={{ fontWeight: 800, color: '#16a34a', fontSize: '14.5px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.3px' }}>
+                        <span>📄</span> DOKUMEN BERITA ACARA TERBIT
+                      </div>
+                      <div style={{ fontSize: '13.5px', color: '#334155', marginBottom: '16px', lineHeight: '1.5' }}>
+                        Berita Acara resmi dengan nomor <strong style={{ color: '#0f172a' }}>{ba.nomor_ba}</strong> telah diterbitkan untuk pengajuan proposal ini. Anda dapat mengunduh berkas PDF resmi di bawah ini.
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <a
+                          href={`/api/proposals/${p.id}/berita-acara/preview`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-d"
+                          style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ffffff', padding: '10px 18px', fontSize: '13.5px', fontWeight: 600, border: '1px solid #cbd5e1' }}
+                        >
+                          👁 Preview PDF
+                        </a>
+                        <a
+                          href={`/api/proposals/${p.id}/berita-acara/download`}
+                          className="btn btn-p"
+                          style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#16a34a', borderColor: '#16a34a', padding: '10px 18px', fontSize: '13.5px', fontWeight: 600, color: '#ffffff' }}
+                        >
+                          📥 Download PDF
+                        </a>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div style={{ marginTop: '20px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                      <div style={{ fontWeight: 700, color: '#64748b', fontSize: '13.5px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>⏳</span> BERITA ACARA SEDANG DIPROSES
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.4' }}>
+                        Menunggu dokumen Berita Acara resmi diterbitkan oleh Admin. Silakan periksa kembali halaman ini secara berkala.
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
             </div>
           )}
 
