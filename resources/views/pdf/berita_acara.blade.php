@@ -159,15 +159,15 @@
     <!-- Kop Surat -->
     <table class="kop-table">
         <tr>
-            @if(file_exists(public_path('icon_web.png')))
+            @if(file_exists(public_path('Logo PTPN IV.png')))
                 <td class="kop-logo">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('icon_web.png'))) }}" width="60" height="60" alt="Logo">
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('Logo PTPN IV.png'))) }}" width="60" height="60" alt="Logo">
                 </td>
             @endif
-            <td class="kop-text" style="{{ file_exists(public_path('icon_web.png')) ? 'padding-right: 60px;' : '' }}">
-                <div class="kop-title">Sistem Informasi Gerak Alur Proposal (SIGAP)</div>
-                <div class="kop-subtitle">Sistem Verifikasi, Monitoring, dan Pengawasan Pencairan Dana Hibah</div>
-                <div class="kop-address">Jln. Raya Protokol No. 123, Blok C, Jakarta • Telp: (021) 123-4567 • Email: support@sigap.go.id</div>
+            <td class="kop-text" style="{{ file_exists(public_path('Logo PTPN IV.png')) ? 'padding-right: 60px;' : '' }}">
+                <div class="kop-title">Sistem Informasi Gerak Alur Proposal</div>
+                <div class="kop-subtitle">Sistem Verifikasi, Monitoring, dan Pengawasan Pencairan Dana</div>
+                <div class="kop-address">Jln. Raya ABC No. 123, Blok C, Medan • Telp: (021) 123-4567 • Email: support@sigap.go.id</div>
             </td>
         </tr>
     </table>
