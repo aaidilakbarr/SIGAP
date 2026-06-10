@@ -1,5 +1,4 @@
 import React from 'react';
-import { Timeline } from './Timeline';
 
 export const ProposalDetail = ({ 
   selectedProposal, setSelectedProposal, 
@@ -96,30 +95,6 @@ export const ProposalDetail = ({
           </div>
         )}
 
-        {/* Timeline Progress */}
-        <div className="up-timeline-section">
-          <div className="up-timeline-title">Progres Pengajuan</div>
-          <Timeline currentStatus={p.status} />
-
-          {/* Bukti transfer */}
-          {p.bukti_transfer && (
-            <div className="up-transfer-card">
-              <div className="up-transfer-card-left">
-                <div className="up-transfer-title">📄 Bukti Pengiriman Dana</div>
-                <div className="up-transfer-sub">Admin telah melampirkan slip pencairan dana.</div>
-              </div>
-              <a
-                href={`/api/preview-file/${p.bukti_transfer}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="up-transfer-link"
-              >
-                Lihat →
-              </a>
-            </div>
-          )}
-        </div>
-
         {/* Dokumen Terlampir */}
         {(p.file_proposal || p.evidence_dokumen || p.bukti_transfer) && (
           <div className="up-docs-section">
@@ -136,6 +111,14 @@ export const ProposalDetail = ({
               <div className="up-doc-item" style={{ background: '#fffbeb', borderColor: '#fef3c7' }}>
                 <div className="up-doc-item-label" style={{ color: '#92400e' }}>📋 File LPJ / Evidence</div>
                 <a href={`/api/preview-file/${p.evidence_dokumen}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
+                  Lihat →
+                </a>
+              </div>
+            )}
+            {p.bukti_transfer && (
+              <div className="up-doc-item" style={{ background: '#f0f9ff', borderColor: '#e0f2fe' }}>
+                <div className="up-doc-item-label" style={{ color: '#075985' }}>📄 Bukti Pengiriman Dana</div>
+                <a href={`/api/preview-file/${p.bukti_transfer}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
                   Lihat →
                 </a>
               </div>

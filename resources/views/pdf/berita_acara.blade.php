@@ -178,7 +178,7 @@
 
     <!-- Opening Text -->
     <div class="opening-text">
-        Pada hari ini, <strong>{{ $hari }}</strong>, tanggal <strong>{{ $tanggal }}</strong>, bertempat di Kantor Administrasi SIGAP, yang bertanda tangan di bawah ini menyatakan bahwa dokumen laporan dan verifikasi proposal kegiatan telah diperiksa secara seksama dan dinyatakan selesai dengan rincian data sebagai berikut:
+        Pada hari ini, <strong>{{ $hari }}</strong>, tanggal <strong>{{ $tanggal }}</strong>, yang bertanda tangan di bawah ini menyatakan bahwa dokumen laporan dan verifikasi proposal kegiatan telah diperiksa secara seksama dan dinyatakan selesai dengan rincian data sebagai berikut:
     </div>
 
     <!-- Data Table -->
