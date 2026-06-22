@@ -117,7 +117,7 @@ export const ProposalDetail = ({
             )}
             {p.bukti_transfer && (
               <div className="up-doc-item" style={{ background: '#f0f9ff', borderColor: '#e0f2fe' }}>
-                <div className="up-doc-item-label" style={{ color: '#075985' }}>📄 Bukti Pengiriman Dana</div>
+                <div className="up-doc-item-label" style={{ color: '#075985' }}>📄 Bukti Pembayaran</div>
                 <a href={`/api/preview-file/${p.bukti_transfer}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
                   Lihat →
                 </a>

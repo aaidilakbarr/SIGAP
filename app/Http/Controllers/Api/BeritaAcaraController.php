@@ -86,7 +86,7 @@ class BeritaAcaraController extends Controller
         $nomorBa = DB::transaction(function() use ($romanMonth, $now) {
             $count = BeritaAcara::count();
             $nextSeq = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
-            return "BA-{$nextSeq}/SIGAP/{$romanMonth}/" . $now->format('Y');
+            return "2HUMAS/BA-{$nextSeq}/SIGAP/{$romanMonth}/" . $now->format('Y');
         });
 
         // 6. Define localized Indonesian date parameters
@@ -107,6 +107,25 @@ class BeritaAcaraController extends Controller
         $hari = $days[$now->format('l')];
         $tanggal = $now->format('d') . ' ' . $months[$now->format('n')] . ' ' . $now->format('Y');
 
+        // Spelling/terbilang for funds
+        $terbilang = $this->terbilang($proposal->dana_diajukan);
+
+        // Get transfer date from activity log or file modification date fallback
+        $transferLog = ActivityLog::where('action', 'Upload Bukti Transfer')
+            ->where('description', 'like', "%{$proposal->kode_tiket}%")
+            ->orderBy('created_at', 'desc')
+            ->first();
+        
+        $tglTransferCarbon = null;
+        if ($transferLog) {
+            $tglTransferCarbon = $transferLog->created_at;
+        } elseif ($proposal->bukti_transfer && Storage::disk('public')->exists($proposal->bukti_transfer)) {
+            $tglTransferCarbon = Carbon::createFromTimestamp(Storage::disk('public')->lastModified($proposal->bukti_transfer));
+        } else {
+            $tglTransferCarbon = $proposal->updated_at ?? $now;
+        }
+        $tglTransfer = $tglTransferCarbon->format('d') . ' ' . $months[$tglTransferCarbon->format('n')] . ' ' . $tglTransferCarbon->format('Y');
+
         // Create temporary BA record instance for rendering (needed for relations or numbers)
         $beritaAcara = new BeritaAcara();
         $beritaAcara->nomor_ba = $nomorBa;
@@ -116,7 +135,7 @@ class BeritaAcaraController extends Controller
         $beritaAcara->created_at = $now;
 
         // 7. Render PDF using DomPDF
-        $pdf = Pdf::loadView('pdf.berita_acara', compact('beritaAcara', 'proposal', 'hari', 'tanggal'));
+        $pdf = Pdf::loadView('pdf.berita_acara', compact('beritaAcara', 'proposal', 'hari', 'tanggal', 'terbilang', 'tglTransfer'));
         
         // Ensure folder public/storage/berita_acara exists
         if (!Storage::disk('public')->exists('berita_acara')) {
@@ -198,5 +217,36 @@ class BeritaAcaraController extends Controller
         }
 
         return Storage::disk('public')->download($beritaAcara->file_path, basename($beritaAcara->file_path));
+    }
+
+    private function terbilang($angka)
+    {
+        $angka = abs($angka);
+        $baca = array("", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "sebelas");
+        $terbilang = "";
+        
+        if ($angka < 12) {
+            $terbilang = " " . $baca[$angka];
+        } else if ($angka < 20) {
+            $terbilang = $this->terbilang($angka - 10) . " belas";
+        } else if ($angka < 100) {
+            $terbilang = $this->terbilang(floor($angka / 10)) . " puluh " . $this->terbilang($angka % 10);
+        } else if ($angka < 200) {
+            $terbilang = " seratus " . $this->terbilang($angka - 100);
+        } else if ($angka < 1000) {
+            $terbilang = $this->terbilang(floor($angka / 100)) . " ratus " . $this->terbilang($angka % 100);
+        } else if ($angka < 2000) {
+            $terbilang = " seribu " . $this->terbilang($angka - 1000);
+        } else if ($angka < 1000000) {
+            $terbilang = $this->terbilang(floor($angka / 1000)) . " ribu " . $this->terbilang($angka % 1000);
+        } else if ($angka < 1000000000) {
+            $terbilang = $this->terbilang(floor($angka / 1000000)) . " juta " . $this->terbilang($angka % 1000000);
+        } else if ($angka < 1000000000000) {
+            $terbilang = $this->terbilang(floor($angka / 1000000000)) . " milyar " . $this->terbilang(fmod($angka, 1000000000));
+        } else if ($angka < 1000000000000000) {
+            $terbilang = $this->terbilang(floor($angka / 1000000000000)) . " trilyun " . $this->terbilang(fmod($angka, 1000000000000));
+        }
+        
+        return trim(preg_replace('/\s+/', ' ', $terbilang));
     }
 }

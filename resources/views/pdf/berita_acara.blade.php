@@ -4,253 +4,186 @@
     <meta charset="utf-8">
     <title>Berita Acara - {{ $beritaAcara->nomor_ba }}</title>
     <style>
+        @page {
+            size: a4 portrait;
+            margin: 2.5cm 2cm 2cm 2cm;
+        }
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             font-size: 12pt;
-            line-height: 1.5;
-            color: #1a202c;
+            line-height: 1.6;
+            color: #000000;
             margin: 0;
-            padding: 10px;
+            padding: 0;
         }
-        /* Kop Surat Styles */
-        .kop-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-bottom: 3px double #1a202c;
+        .header {
+            text-align: center;
             margin-bottom: 25px;
         }
-        .kop-logo {
-            width: 70px;
-            vertical-align: middle;
-            padding-bottom: 10px;
-        }
-        .kop-text {
-            text-align: center;
-            vertical-align: middle;
-            padding-bottom: 10px;
-        }
-        .kop-title {
-            font-size: 16pt;
-            font-weight: bold;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #1b4d3e; /* Sleek forest green accent */
-        }
-        .kop-subtitle {
-            font-size: 10pt;
-            margin: 3px 0 0 0;
-            color: #4a5568;
-            font-style: italic;
-        }
-        .kop-address {
-            font-size: 9pt;
-            margin: 3px 0 0 0;
-            color: #718096;
-        }
-
-        /* Document Title */
-        .doc-title {
-            text-align: center;
-            font-weight: bold;
+        .title {
             font-size: 14pt;
+            font-weight: bold;
             text-decoration: underline;
-            margin-bottom: 5px;
             text-transform: uppercase;
+            margin: 0;
         }
-        .doc-number {
-            text-align: center;
+        .number {
             font-size: 11pt;
-            margin-bottom: 30px;
-            color: #4a5568;
+            margin-top: 5px;
         }
-
-        /* Content Styles */
-        .opening-text {
+        .paragraph {
             text-align: justify;
-            margin-bottom: 20px;
-            text-indent: 30px;
+            margin-bottom: 15px;
         }
-        
-        /* Table Styles */
-        .data-table {
+        .party-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 25px;
+            margin-top: 10px;
+            margin-bottom: 15px;
         }
-        .data-table td {
-            padding: 8px 10px;
+        .party-table td {
             vertical-align: top;
+            padding: 2px 0;
         }
-        .data-table td.label {
-            width: 30%;
-            font-weight: bold;
-            color: #4a5568;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .data-table td.value {
-            width: 70%;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        /* Highlight box for Selesai */
-        .status-badge {
-            display: inline-block;
-            background-color: #def7ec;
-            color: #03543f;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 10pt;
-            text-transform: uppercase;
-        }
-
-        /* Notes Section */
-        .notes-section {
-            background-color: #f7fafc;
-            border-left: 4px solid #1b4d3e;
-            padding: 12px 15px;
-            margin-bottom: 30px;
-            border-radius: 0 4px 4px 0;
-        }
-        .notes-title {
-            font-weight: bold;
-            font-size: 11pt;
-            color: #1b4d3e;
-            margin-bottom: 5px;
-        }
-        .notes-content {
-            font-style: italic;
-            color: #4a5568;
-        }
-
-        /* Closing text */
-        .closing-text {
-            text-align: justify;
-            margin-bottom: 40px;
-        }
-
-        /* Signature Table */
         .signature-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 30px;
+            margin-top: 35px;
         }
         .signature-cell {
             width: 50%;
             text-align: center;
+            vertical-align: top;
         }
         .signature-role {
             font-weight: bold;
-            margin-bottom: 60px;
+            margin-bottom: 70px;
         }
         .signature-name {
             font-weight: bold;
             text-decoration: underline;
         }
         .signature-title {
-            font-size: 10pt;
-            color: #718096;
+            font-size: 11pt;
+        }
+        .mengetahui-block {
+            margin-top: 35px;
+            text-align: center;
+        }
+        .mengetahui-title {
+            margin-bottom: 70px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Kop Surat -->
-    <table class="kop-table">
+    <!-- Header / Title -->
+    <div class="header">
+        <h1 class="title">BERITA ACARA SERAH TERIMA BANTUAN</h1>
+        <div class="number">Nomor : {{ $beritaAcara->nomor_ba }}</div>
+    </div>
+
+    <!-- Opening Paragraph -->
+    <div class="paragraph">
+        Pada hari ini, {{ $hari }} tanggal {{ $tanggal }}, bertandatangan di bawah ini:
+    </div>
+
+    <!-- Pihak Pertama -->
+    <table class="party-table">
         <tr>
-            @if(file_exists(public_path('Logo PTPN IV.png')))
-                <td class="kop-logo">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('Logo PTPN IV.png'))) }}" width="60" height="60" alt="Logo">
-                </td>
-            @endif
-            <td class="kop-text" style="{{ file_exists(public_path('Logo PTPN IV.png')) ? 'padding-right: 60px;' : '' }}">
-                <div class="kop-title">Sistem Informasi Gerak Alur Proposal</div>
-                <div class="kop-subtitle">Sistem Verifikasi, Monitoring, dan Pengawasan Pencairan Dana</div>
-                <div class="kop-address">Jln. Raya ABC No. 123, Blok C, Medan • Telp: (021) 123-4567 • Email: support@sigap.go.id</div>
+            <td style="width: 4%;">1.</td>
+            <td style="width: 15%;">Nama</td>
+            <td style="width: 2%;">:</td>
+            <td style="width: 79%; font-weight: bold;">{{ $beritaAcara->generatedBy->name }}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>Jabatan</td>
+            <td>:</td>
+            <td>Staf Humas & Protokoler</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>Alamat</td>
+            <td>:</td>
+            <td>Jalan Letjend. Suprapto No. 2 Medan</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td colspan="3" style="padding-top: 4px; font-style: italic;">
+                Selanjutnya disebut <strong>"Pihak Pertama"</strong>
             </td>
         </tr>
     </table>
 
-    <!-- Document Title -->
-    <div class="doc-title">Berita Acara Verifikasi Proposal</div>
-    <div class="doc-number">Nomor: {{ $beritaAcara->nomor_ba }}</div>
-
-    <!-- Opening Text -->
-    <div class="opening-text">
-        Pada hari ini, <strong>{{ $hari }}</strong>, tanggal <strong>{{ $tanggal }}</strong>, yang bertanda tangan di bawah ini menyatakan bahwa dokumen laporan dan verifikasi proposal kegiatan telah diperiksa secara seksama dan dinyatakan selesai dengan rincian data sebagai berikut:
-    </div>
-
-    <!-- Data Table -->
-    <table class="data-table">
+    <!-- Pihak Kedua -->
+    <table class="party-table" style="margin-bottom: 25px;">
         <tr>
-            <td class="label">Kode Tiket</td>
-            <td class="value" style="font-weight: bold; font-family: monospace; font-size: 11pt;">{{ $proposal->kode_tiket }}</td>
+            <td style="width: 4%;">2.</td>
+            <td style="width: 15%;">Nama</td>
+            <td style="width: 2%;">:</td>
+            <td style="width: 79%; font-weight: bold;">{{ $proposal->user->name }}</td>
         </tr>
         <tr>
-            <td class="label">Nama Pemohon</td>
-            <td class="value">{{ $proposal->user->name }}</td>
+            <td></td>
+            <td>Jabatan</td>
+            <td>:</td>
+            <td>Ketua</td>
         </tr>
         <tr>
-            <td class="label">Instansi / Lembaga</td>
-            <td class="value">{{ $proposal->user->instansi ?? '-' }}</td>
+            <td></td>
+            <td>Alamat</td>
+            <td>:</td>
+            <td>{{ $proposal->user->instansi ?? 'Medan' }}</td>
         </tr>
         <tr>
-            <td class="label">Nama Kegiatan</td>
-            <td class="value" style="font-weight: bold;">{{ $proposal->kegiatan }}</td>
-        </tr>
-        <tr>
-            <td class="label">Jenis Pengajuan</td>
-            <td class="value">{{ $proposal->jenis }}</td>
-        </tr>
-        <tr>
-            <td class="label">Tanggal Pelaksanaan</td>
-            <td class="value">{{ \Carbon\Carbon::parse($proposal->tgl_pelaksanaan)->isoFormat('LL') }}</td>
-        </tr>
-        <tr>
-            <td class="label">Dana yang Disetujui</td>
-            <td class="value" style="font-weight: bold; color: #1b4d3e;">Rp {{ number_format($proposal->dana_diajukan, 0, ',', '.') }}</td>
-        </tr>
-        <tr>
-            <td class="label">Status Verifikasi</td>
-            <td class="value">
-                <span class="status-badge">Selesai / Terverifikasi</span>
+            <td></td>
+            <td colspan="3" style="padding-top: 4px; font-style: italic;">
+                Selanjutnya disebut <strong>"Pihak Kedua"</strong>
             </td>
-        </tr>
-        <tr>
-            <td class="label">Tanggal Disetujui</td>
-            <td class="value">{{ $beritaAcara->created_at->isoFormat('LL') }}</td>
         </tr>
     </table>
 
-    <!-- Catatan Admin (if exists) -->
-    @if(!empty($beritaAcara->catatan_admin))
-        <div class="notes-section">
-            <div class="notes-title">Catatan Reviewer / Admin:</div>
-            <div class="notes-content">"{{ $beritaAcara->catatan_admin }}"</div>
-        </div>
-    @endif
-
-    <!-- Closing Text -->
-    <div class="closing-text">
-        Demikian Berita Acara Verifikasi Proposal ini dibuat dengan sebenar-benarnya untuk digunakan sebagaimana mestinya sebagai bukti sah pencairan dan penyelesaian laporan pertanggungjawaban kegiatan.
+    <!-- Letter Body -->
+    <div class="paragraph">
+        Dengan ini menerangkan bahwa Pihak Pertama telah menyerahkan dana sebesar Rp. {{ number_format($proposal->dana_diajukan, 0, ',', '.') }} ({{ $terbilang }} rupiah) kepada Pihak Kedua dan Pihak Kedua telah menerima dana bantuan melalui No. rekening: {{ $proposal->nomor_rekening }} nama rekening: {{ $proposal->atas_nama }} tanggal {{ $tglTransfer }}.
     </div>
 
-    <!-- Signatures -->
+    <div class="paragraph">
+        Penerimaan bantuan keuangan bertanggungjawab secara formal dan material atas penggunaan keuangan yang diterima.
+    </div>
+
+    <div class="paragraph" style="margin-bottom: 30px;">
+        Demikian Berita Acara Serah Terima ini dibuat dengan sebenarnya, untuk dapat dipergunakan sebagaimana mestinya.
+    </div>
+
+    <!-- Signatures Section -->
     <table class="signature-table">
         <tr>
             <td class="signature-cell">
-                <div class="signature-role">Pihak Reviewer (Admin)</div>
-                <div class="signature-name">{{ $beritaAcara->generatedBy->name }}</div>
-                <div class="signature-title">Reviewer Administrasi SIGAP</div>
+                <div class="signature-role">Pihak Kedua</div>
+                <div style="height: 65px;"></div>
+                <div class="signature-name">({{ strtoupper($proposal->user->instansi ?? $proposal->user->name) }})</div>
             </td>
             <td class="signature-cell">
-                <div class="signature-role">Pihak Pemohon (User)</div>
-                <div class="signature-name">{{ $proposal->user->name }}</div>
-                <div class="signature-title">Penanggung Jawab Kegiatan</div>
+                <div class="signature-role">
+                    Pihak Pertama<br>
+                    PT Perkebunan Nusantara IV
+                </div>
+                <div style="height: 48px;"></div>
+                <div class="signature-name">{{ $beritaAcara->generatedBy->name }}</div>
+                <div class="signature-title">Staf Humas & Protokoler</div>
             </td>
         </tr>
     </table>
+
+    <!-- Mengetahui Block -->
+    <div class="mengetahui-block">
+        <div class="mengetahui-title">Mengetahui</div>
+        <div style="height: 65px;"></div>
+        <div class="signature-name">Maktal Kunto Aji</div>
+        <div class="signature-title">Kasubbag Kesekretariatan dan Humas</div>
+    </div>
 
 </body>
 </html>
