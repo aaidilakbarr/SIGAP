@@ -1,8 +1,8 @@
 import React from 'react';
 
-export const ProposalDetail = ({ 
-  selectedProposal, setSelectedProposal, 
-  setPortalTab, selectedUploadFile, 
+export const ProposalDetail = ({
+  selectedProposal, setSelectedProposal,
+  setPortalTab, selectedUploadFile,
   handleFileChange, removeSelectedFile,
   handleUploadProposal, handleUploadEvidence,
   getStatusClass, formatRupiah
@@ -134,7 +134,7 @@ export const ProposalDetail = ({
                 <span className="up-notice-icon">⚠️</span>
                 <span>Proposal Anda memerlukan revisi. Silakan unggah proposal baru yang sudah diperbaiki.</span>
               </div>
-              
+
               {!selectedUploadFile ? (
                 <>
                   <div className="up-upload-zone" onClick={() => document.getElementById(`proposal-up-${p.id}`)?.click()}>
@@ -235,7 +235,7 @@ export const ProposalDetail = ({
                 <span className="up-notice-icon">✅</span>
                 <span>Proses Selesai! Dana telah sukses dicairkan dan seluruh dokumen LPJ telah diverifikasi.</span>
               </div>
-              
+
               {(() => {
                 const ba = p.berita_acara || p.beritaAcara;
                 if (ba) {

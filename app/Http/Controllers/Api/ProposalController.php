@@ -422,15 +422,17 @@ class ProposalController extends Controller
             abort(404, 'File tidak ditemukan.');
         }
 
-        $file = Storage::disk('public')->get($path);
-        $mimeType = Storage::disk('public')->mimeType($path);
+        $fullPath = Storage::disk('public')->path($path);
+        $mimeType = Storage::disk('public')->mimeType($path) ?: 'application/octet-stream';
 
         // Extract original filename (strip timestamp prefix if present)
         $basename = basename($path);
         $originalName = preg_replace('/^\d+_/', '', $basename);
+        $cleanName = str_replace(['"', "'", "\r", "\n"], '', $originalName);
 
-        return response($file, 200)
-            ->header('Content-Type', $mimeType)
-            ->header('Content-Disposition', 'inline; filename="' . $originalName . '"');
+        return response()->file($fullPath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $cleanName . '"',
+        ]);
     }
 }

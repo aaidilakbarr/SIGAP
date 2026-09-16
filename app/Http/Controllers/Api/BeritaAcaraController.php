@@ -195,12 +195,14 @@ class BeritaAcaraController extends Controller
             abort(404, 'File PDF tidak ditemukan di server.');
         }
 
-        $file = Storage::disk('public')->get($beritaAcara->file_path);
-        $mimeType = Storage::disk('public')->mimeType($beritaAcara->file_path);
+        $fullPath = Storage::disk('public')->path($beritaAcara->file_path);
+        $filename = basename($beritaAcara->file_path);
+        $cleanName = str_replace(['"', "'", "\r", "\n"], '', $filename);
 
-        return response($file, 200)
-            ->header('Content-Type', $mimeType)
-            ->header('Content-Disposition', 'inline; filename="' . basename($beritaAcara->file_path) . '"');
+        return response()->file($fullPath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $cleanName . '"',
+        ]);
     }
 
     public function download($proposalId)
