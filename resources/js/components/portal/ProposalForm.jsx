@@ -1,226 +1,341 @@
 import React, { useState } from 'react';
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  FileText,
+  Landmark,
+  Loader2,
+  Paperclip,
+  X,
+} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
-export const ProposalForm = ({ 
-  newProposal, setNewProposal, 
-  handleCreateProposal, setPortalTab, 
-  formatRupiah 
+const POPULAR_BANKS = ['BCA', 'Mandiri', 'BNI', 'BRI', 'BSI', 'CIMB Niaga'];
+
+export const ProposalForm = ({
+  newProposal,
+  setNewProposal,
+  handleCreateProposal,
+  submitting,
+  setPortalTab,
+  formatRupiah,
 }) => {
   const [selectedBank, setSelectedBank] = useState(() => {
-    const popular = ['BCA', 'Mandiri', 'BNI', 'BRI', 'BSI', 'CIMB Niaga'];
     if (!newProposal.nama_bank) return '';
-    if (popular.includes(newProposal.nama_bank)) return newProposal.nama_bank;
+    if (POPULAR_BANKS.includes(newProposal.nama_bank)) return newProposal.nama_bank;
     return 'Lainnya';
   });
-  const [showBankInfo, setShowBankInfo] = useState(() => {
-    return !!(newProposal.nama_bank || newProposal.nomor_rekening || newProposal.atas_nama);
-  });
+
+  const [showBankInfo, setShowBankInfo] = useState(() =>
+    Boolean(newProposal.nama_bank || newProposal.nomor_rekening || newProposal.atas_nama)
+  );
+
+  const isDisabled =
+    submitting ||
+    !newProposal.kegiatan ||
+    !newProposal.tgl_pelaksanaan ||
+    !newProposal.dana_diajukan ||
+    !newProposal.file;
+
   return (
-    <div className="up-form-wrapper">
-      <div className="up-form-card">
-        <div className="up-form-header">
-          <div className="up-form-header-title">📝 Ajukan Proposal Baru</div>
-          <div className="up-form-header-sub">Isi formulir dengan lengkap dan benar.</div>
+    <Card className="overflow-hidden">
+      <CardHeader className="border-b border-border bg-muted/30 p-4 sm:p-5">
+        <CardTitle className="text-base sm:text-lg">Formulir Pengajuan Proposal</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          Lengkapi rincian kegiatan, estimasi anggaran, dan berkas proposal Anda.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+        {/* Nama Kegiatan */}
+        <div className="space-y-2">
+          <Label htmlFor="kegiatan">
+            Nama / Judul Kegiatan <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="kegiatan"
+            className="h-11 sm:h-9"
+            value={newProposal.kegiatan}
+            onChange={(e) => setNewProposal({ ...newProposal, kegiatan: e.target.value })}
+            placeholder="Contoh: Seminar Nasional Mahasiswa Berprestasi"
+          />
         </div>
 
-        <div className="up-form-body">
-          {/* Nama Kegiatan */}
-          <div className="up-form-group">
-            <label className="up-form-label">Nama / Judul Kegiatan <span>*</span></label>
-            <input
-              className="up-form-input"
-              value={newProposal.kegiatan}
-              onChange={e => setNewProposal({ ...newProposal, kegiatan: e.target.value })}
-              placeholder="Contoh: Seminar Nasional Mahasiswa Berprestasi..."
+        {/* Tanggal & Skema */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="tgl-pelaksanaan">
+              Tanggal Rencana Pelaksanaan <span className="text-destructive">*</span>
+            </Label>
+            <DatePicker
+              id="tgl-pelaksanaan"
+              value={newProposal.tgl_pelaksanaan}
+              onChange={(val) => setNewProposal({ ...newProposal, tgl_pelaksanaan: val })}
+              placeholder="Pilih tanggal pelaksanaan"
+              displayFormat="d MMMM yyyy"
+              clearable={false}
             />
           </div>
 
-          {/* Tanggal & Skema */}
-          <div className="up-form-row">
-            <div className="up-form-group">
-              <label className="up-form-label">Tanggal Rencana Pelaksanaan <span>*</span></label>
-              <input
-                className="up-form-input"
-                type="date"
-                value={newProposal.tgl_pelaksanaan}
-                onChange={e => setNewProposal({ ...newProposal, tgl_pelaksanaan: e.target.value })}
-              />
-            </div>
-            <div className="up-form-group">
-              <label className="up-form-label">Skema Pencairan <span>*</span></label>
-              <select
-                className="up-form-input"
-                value={newProposal.jenis}
-                onChange={e => setNewProposal({ ...newProposal, jenis: e.target.value })}
-                style={{ cursor: 'pointer', appearance: 'auto' }}
-              >
-                <option value="Advance">Advance Payment (Dana Di Depan)</option>
-                <option value="Reimburse">Reimbursement (Diganti Kemudian)</option>
-              </select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="skema-pencairan">
+              Skema Pencairan <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={newProposal.jenis}
+              onValueChange={(val) => setNewProposal({ ...newProposal, jenis: val })}
+            >
+              <SelectTrigger id="skema-pencairan" className="h-11 sm:h-9">
+                <SelectValue placeholder="Pilih skema pencairan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Advance">Advance Payment (Dana Di Depan)</SelectItem>
+                <SelectItem value="Reimburse">Reimbursement (Diganti Kemudian)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Dana & File */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="dana-diajukan">
+              Total Dana Diajukan (Rp) <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="dana-diajukan"
+              type="text"
+              inputMode="numeric"
+              value={
+                newProposal.dana_diajukan
+                  ? formatRupiah(newProposal.dana_diajukan.toString().replace(/\./g, ''))
+                  : ''
+              }
+              onChange={(e) =>
+                setNewProposal({
+                  ...newProposal,
+                  dana_diajukan: e.target.value.replace(/[^0-9]/g, ''),
+                })
+              }
+              placeholder="Contoh: 5.000.000"
+              className="h-11 sm:h-9 tabular-nums"
+            />
           </div>
 
-          {/* Dana & File */}
-          <div className="up-form-row">
-            <div className="up-form-group">
-              <label className="up-form-label">Total Dana Diajukan (Rp) <span>*</span></label>
-              <input
-                className="up-form-input"
-                type="text"
-                value={newProposal.dana_diajukan ? formatRupiah(newProposal.dana_diajukan.toString().replace(/\./g, '')) : ''}
-                onChange={e => setNewProposal({ ...newProposal, dana_diajukan: e.target.value.replace(/[^0-9]/g, '') })}
-                placeholder="Contoh: 5.000.000"
-              />
-            </div>
-            <div className="up-form-group">
-              <label className="up-form-label">Upload File Proposal (PDF/DOC/DOCX) <span>*</span></label>
-              {!newProposal.file ? (
-                <>
-                  <div className="up-upload-zone" onClick={() => document.getElementById('new-proposal-file')?.click()} style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', minHeight: '44px', marginBottom: '0', borderRadius: '10px' }}>
-                    <div className="up-upload-zone-icon" style={{ fontSize: '20px', margin: '0', opacity: 0.7 }}>📎</div>
-                    <div style={{ textAlign: 'left' }}>
-                      <div className="up-upload-zone-text" style={{ margin: '0', fontSize: '13px', lineHeight: '1.2' }}>Pilih file proposal</div>
-                      <div className="up-upload-zone-sub" style={{ margin: '0', fontSize: '10.5px' }}>PDF, DOC, DOCX — Maks. 10MB</div>
+          <div className="space-y-2">
+            <Label htmlFor="new-proposal-file">
+              File Proposal (PDF, DOC, DOCX) <span className="text-destructive">*</span>
+            </Label>
+
+            {!newProposal.file ? (
+              <label
+                htmlFor="new-proposal-file"
+                className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg border border-dashed border-input bg-muted/30 px-3.5 py-2 transition-colors hover:border-primary/50 hover:bg-primary/5"
+              >
+                <Paperclip className="size-4 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-foreground">Pilih berkas proposal</div>
+                  <div className="text-[11px] text-muted-foreground">PDF, DOC, DOCX, maks. 10MB</div>
+                </div>
+              </label>
+            ) : (
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <FileText className="size-4 shrink-0 text-primary" />
+                  <div className="min-w-0">
+                    <div className="truncate text-xs font-semibold text-foreground">
+                      {newProposal.file.name}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {(newProposal.file.size / 1024 / 1024).toFixed(2)} MB
                     </div>
                   </div>
-                  <input
-                    type="file"
-                    id="new-proposal-file"
-                    className="up-upload-input"
-                    accept=".pdf,.doc,.docx"
-                    style={{ display: 'none' }}
-                    onChange={e => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        setNewProposal({ ...newProposal, file: e.target.files[0] });
-                      }
-                    }}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => {
+                    setNewProposal({ ...newProposal, file: null });
+                    const el = document.getElementById('new-proposal-file');
+                    if (el) el.value = '';
+                  }}
+                  aria-label="Hapus file terpilih"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            )}
+
+            <input
+              type="file"
+              id="new-proposal-file"
+              className="sr-only up-upload-input"
+              accept=".pdf,.doc,.docx"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  setNewProposal({ ...newProposal, file: e.target.files[0] });
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Collapsible Bank Info */}
+        <div className="rounded-xl border border-border bg-muted/30">
+          <button
+            type="button"
+            onClick={() => setShowBankInfo(!showBankInfo)}
+            aria-expanded={showBankInfo}
+            className="flex w-full min-h-12 items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-foreground cursor-pointer"
+          >
+            <span className="flex items-center gap-2">
+              <Landmark className="size-4 text-primary" />
+              Informasi Rekening Bank (Opsional)
+            </span>
+            <ChevronDown
+              className={cn(
+                'size-4 text-muted-foreground transition-transform duration-200',
+                showBankInfo && 'rotate-180'
+              )}
+            />
+          </button>
+
+          {showBankInfo && (
+            <div className="space-y-4 border-t border-border px-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="nama-bank">Nama Bank</Label>
+                <Select
+                  value={selectedBank || 'NONE'}
+                  onValueChange={(val) => {
+                    if (val === 'NONE') {
+                      setSelectedBank('');
+                      setNewProposal({ ...newProposal, nama_bank: '' });
+                      return;
+                    }
+                    setSelectedBank(val);
+                    setNewProposal({
+                      ...newProposal,
+                      nama_bank: val === 'Lainnya' ? '' : val,
+                    });
+                  }}
+                >
+                  <SelectTrigger id="nama-bank">
+                    <SelectValue placeholder="Pilih Bank" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Pilih Bank</SelectItem>
+                    <SelectItem value="BCA">BCA (Bank Central Asia)</SelectItem>
+                    <SelectItem value="Mandiri">Mandiri</SelectItem>
+                    <SelectItem value="BNI">BNI (Bank Negara Indonesia)</SelectItem>
+                    <SelectItem value="BRI">BRI (Bank Rakyat Indonesia)</SelectItem>
+                    <SelectItem value="BSI">BSI (Bank Syariah Indonesia)</SelectItem>
+                    <SelectItem value="CIMB Niaga">CIMB Niaga</SelectItem>
+                    <SelectItem value="Lainnya">Lainnya (Tulis Manual)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedBank === 'Lainnya' && (
+                <div className="space-y-2">
+                  <Label htmlFor="bank-lainnya" className="text-xs text-muted-foreground">
+                    Masukkan Nama Bank Lainnya
+                  </Label>
+                  <Input
+                    id="bank-lainnya"
+                    value={newProposal.nama_bank}
+                    onChange={(e) => setNewProposal({ ...newProposal, nama_bank: e.target.value })}
+                    placeholder="Masukkan nama bank Anda"
                   />
-                </>
-              ) : (
-                <div className="up-file-preview" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-                    <div style={{ fontSize: '20px' }}>📄</div>
-                    <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>{newProposal.file.name}</div>
-                      <div style={{ fontSize: '11px', color: '#64748b' }}>{(newProposal.file.size / 1024 / 1024).toFixed(2)} MB • {newProposal.file.type.split('/')[1]?.toUpperCase() || 'File'}</div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setNewProposal({ ...newProposal, file: null });
-                      const el = document.getElementById('new-proposal-file');
-                      if (el) el.value = '';
-                    }} 
-                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '16px', cursor: 'pointer', padding: '4px' }}
-                  >
-                    ✕
-                  </button>
                 </div>
               )}
-            </div>
-          </div>
 
-          {/* Info Rekening */}
-          <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: showBankInfo ? '16px' : '0' }}>
-            <div 
-              style={{ fontSize: '13px', fontWeight: 700, color: '#334155', borderBottom: showBankInfo ? '1px solid #e2e8f0' : 'none', paddingBottom: showBankInfo ? '8px' : '0', marginBottom: '-4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
-              onClick={() => setShowBankInfo(!showBankInfo)}
-            >
-              <span>💳 Informasi Rekening Bank (Opsional)</span>
-              <span style={{ fontSize: '12px', color: '#64748b', transition: 'transform 0.2s ease', transform: showBankInfo ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
-            </div>
-            {showBankInfo && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
-                <div className="up-form-group">
-                  <label className="up-form-label">Nama Bank</label>
-                  <select
-                    className="up-form-input"
-                    value={selectedBank}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setSelectedBank(val);
-                      if (val !== 'Lainnya') {
-                        setNewProposal({ ...newProposal, nama_bank: val });
-                      } else {
-                        setNewProposal({ ...newProposal, nama_bank: '' });
-                      }
-                    }}
-                    style={{ background: '#fff', cursor: 'pointer', appearance: 'auto' }}
-                  >
-                    <option value="">-- Pilih Bank --</option>
-                    <option value="BCA">BCA (Bank Central Asia)</option>
-                    <option value="Mandiri">Mandiri</option>
-                    <option value="BNI">BNI (Bank Negara Indonesia)</option>
-                    <option value="BRI">BRI (Bank Rakyat Indonesia)</option>
-                    <option value="BSI">BSI (Bank Syariah Indonesia)</option>
-                    <option value="CIMB Niaga">CIMB Niaga</option>
-                    <option value="Lainnya">Lainnya (Tulis Manual)</option>
-                  </select>
-                </div>
-
-                {selectedBank === 'Lainnya' && (
-                  <div className="up-form-group" style={{ marginTop: '-8px' }}>
-                    <label className="up-form-label" style={{ fontSize: '11.5px', color: 'var(--t3)' }}>Masukkan Nama Bank Lainnya</label>
-                    <input
-                      className="up-form-input"
-                      value={newProposal.nama_bank}
-                      onChange={e => setNewProposal({ ...newProposal, nama_bank: e.target.value })}
-                      placeholder="Masukkan nama bank Anda..."
-                      style={{ background: '#fff' }}
-                    />
-                  </div>
-                )}
-                <div className="up-form-group">
-                  <label className="up-form-label">Nomor Rekening</label>
-                  <input
-                    className="up-form-input"
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="nomor-rekening">Nomor Rekening</Label>
+                  <Input
+                    id="nomor-rekening"
                     value={newProposal.nomor_rekening}
-                    onChange={e => setNewProposal({ ...newProposal, nomor_rekening: e.target.value })}
-                    placeholder="Contoh: 123456789"
-                    style={{ background: '#fff' }}
+                    onChange={(e) =>
+                      setNewProposal({ ...newProposal, nomor_rekening: e.target.value })
+                    }
+                    placeholder="Nomor rekening tujuan"
+                    className="font-mono"
                   />
                 </div>
-                <div className="up-form-group">
-                  <label className="up-form-label">Atas Nama</label>
-                  <input
-                    className="up-form-input"
+                <div className="space-y-2">
+                  <Label htmlFor="atas-nama">Atas Nama</Label>
+                  <Input
+                    id="atas-nama"
                     value={newProposal.atas_nama || ''}
-                    onChange={e => setNewProposal({ ...newProposal, atas_nama: e.target.value })}
-                    placeholder="Contoh: John Doe"
-                    style={{ background: '#fff' }}
+                    onChange={(e) =>
+                      setNewProposal({ ...newProposal, atas_nama: e.target.value })
+                    }
+                    placeholder="Nama pemilik rekening"
                   />
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* Catatan */}
-          <div className="up-form-group">
-            <label className="up-form-label">Catatan / Rincian Tambahan</label>
-            <textarea
-              className="up-form-input"
-              rows="3"
-              value={newProposal.catatan}
-              onChange={e => setNewProposal({ ...newProposal, catatan: e.target.value })}
-              placeholder="Tuliskan catatan khusus jika ada keterkaitan dengan dana..."
-              style={{ resize: 'vertical', lineHeight: '1.5' }}
-            />
-          </div>
+            </div>
+          )}
         </div>
 
-        <div className="up-form-footer">
-          <button className="up-btn-back" onClick={() => setPortalTab('home')}>
-            ← Batal
-          </button>
-          <button
-            className="up-btn-submit"
-            disabled={!newProposal.kegiatan || !newProposal.tgl_pelaksanaan || !newProposal.dana_diajukan || !newProposal.file}
-            onClick={handleCreateProposal}
-          >
-            Kirim Pengajuan ✓
-          </button>
+        {/* Catatan */}
+        <div className="space-y-2">
+          <Label htmlFor="catatan-proposal">Catatan / Rincian Tambahan</Label>
+          <Textarea
+            id="catatan-proposal"
+            rows={3}
+            value={newProposal.catatan}
+            onChange={(e) => setNewProposal({ ...newProposal, catatan: e.target.value })}
+            placeholder="Tuliskan catatan khusus jika ada keterkaitan dengan pencairan dana..."
+          />
         </div>
-      </div>
-    </div>
+      </CardContent>
+
+      <CardFooter className="flex flex-col-reverse gap-2.5 border-t border-border bg-muted/30 px-4 py-4 sm:flex-row sm:justify-between sm:px-6">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full min-h-11 sm:w-auto"
+          onClick={() => setPortalTab('home')}
+        >
+          <ArrowLeft className="size-4" />
+          Batal
+        </Button>
+        <Button
+          type="button"
+          className="w-full min-h-11 sm:w-auto"
+          disabled={isDisabled}
+          onClick={handleCreateProposal}
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Mengirim...
+            </>
+          ) : (
+            <>
+              <Check className="size-4" />
+              Kirim Pengajuan
+            </>
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };

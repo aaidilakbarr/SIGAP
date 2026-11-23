@@ -1,5 +1,3 @@
-// ─── Shared utilities & constants ────────────────────────────────────────────
-
 export const TITLES = {
   dashboard: 'Dashboard',
   proposals: 'Manajemen Proposal',
@@ -8,38 +6,94 @@ export const TITLES = {
   master: 'Master Database',
   logs: 'Activity Log',
   berita_acara: 'Daftar Berita Acara',
+  monitoring_berita: 'Monitoring Berita',
 };
 
 export const STATUS_STAGES = [
-  { key: 'Dalam Antrean',    label: 'Input',      desc: 'Proposal disubmit dan masuk antrean sistem.' },
-  { key: 'Dalam Review',     label: 'Review',     desc: 'Proposal sedang direview oleh pimpinan.' },
-  { key: 'Menunggu Fisik',   label: 'Fisik',      desc: 'Menunggu penyerahan berkas fisik proposal.' },
-  { key: 'Dana Cair',        label: 'Dana Cair',  desc: 'Dana telah berhasil dicairkan kepada pemohon.' },
-  { key: 'Menunggu Evidence',label: 'Upload LPJ', desc: 'Pemohon harus mengunggah bukti/evidence.' },
-  { key: 'Selesai',          label: 'Selesai',    desc: 'Seluruh proses telah selesai dan laporan diterima.' },
+  { key: 'Dalam Antrean', label: 'Input', desc: 'Proposal disubmit dan masuk antrean sistem.' },
+  { key: 'Dalam Review', label: 'Review', desc: 'Proposal sedang direview oleh pimpinan.' },
+  { key: 'Menunggu Fisik', label: 'Fisik', desc: 'Menunggu penyerahan berkas fisik proposal.' },
+  { key: 'Dana Cair', label: 'Dana Cair', desc: 'Dana telah berhasil dicairkan kepada pemohon.' },
+  { key: 'Menunggu Evidence', label: 'Upload LPJ', desc: 'Pemohon harus mengunggah bukti atau evidence.' },
+  { key: 'Selesai', label: 'Selesai', desc: 'Seluruh proses telah selesai dan laporan diterima.' },
 ];
 
 export const STATUS_OPTIONS = [
-  { value: 'Dalam Antrean',    icon: '🕐', color: '#475569', bg: '#f1f5f9', border: '#cbd5e1', desc: 'Antrean sistem' },
-  { value: 'Dalam Review',     icon: '🔍', color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', desc: 'Sedang direview' },
-  { value: 'Revisi Proposal',  icon: '✏️', color: '#ea580c', bg: '#fff7ed', border: '#fed7aa', desc: 'Perlu perbaikan' },
-  { value: 'Menunggu Fisik',   icon: '📦', color: '#b45309', bg: '#fffbeb', border: '#fde68a', desc: 'Berkas fisik' },
-  { value: 'Dana Cair',        icon: '💸', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', desc: 'Dana dicairkan' },
-  { value: 'Menunggu Evidence',icon: '📋', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', desc: 'Upload LPJ' },
-  { value: 'Selesai',          icon: '✅', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0', desc: 'Proses selesai' },
-  { value: 'Gagal Bayar',      icon: '❌', color: '#dc2626', bg: '#fef2f2', border: '#fecaca', desc: 'Gagal diproses' },
+  {
+    value: 'Dalam Antrean',
+    iconName: 'Clock',
+    desc: 'Antrean sistem',
+    activeClass: 'border-slate-600 bg-slate-50 text-slate-900 ring-2 ring-slate-600/20',
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+  },
+  {
+    value: 'Dalam Review',
+    iconName: 'Search',
+    desc: 'Sedang direview',
+    activeClass: 'border-blue-600 bg-blue-50 text-blue-900 ring-2 ring-blue-600/20',
+    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+  },
+  {
+    value: 'Revisi Proposal',
+    iconName: 'FilePenLine',
+    desc: 'Perlu perbaikan',
+    activeClass: 'border-orange-600 bg-orange-50 text-orange-900 ring-2 ring-orange-600/20',
+    badgeClass: 'bg-orange-50 text-orange-800 border-orange-200',
+  },
+  {
+    value: 'Menunggu Fisik',
+    iconName: 'PackageCheck',
+    desc: 'Berkas fisik',
+    activeClass: 'border-amber-600 bg-amber-50 text-amber-900 ring-2 ring-amber-600/20',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+  },
+  {
+    value: 'Dana Cair',
+    iconName: 'Banknote',
+    desc: 'Dana dicairkan',
+    activeClass: 'border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-600/20',
+    badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  },
+  {
+    value: 'Menunggu Evidence',
+    iconName: 'FileUp',
+    desc: 'Upload LPJ',
+    activeClass: 'border-violet-600 bg-violet-50 text-violet-900 ring-2 ring-violet-600/20',
+    badgeClass: 'bg-violet-50 text-violet-800 border-violet-200',
+  },
+  {
+    value: 'Selesai',
+    iconName: 'CheckCircle2',
+    desc: 'Proses selesai',
+    activeClass: 'border-green-700 bg-green-50 text-green-900 ring-2 ring-green-700/20',
+    badgeClass: 'bg-green-50 text-green-800 border-green-200',
+  },
+  {
+    value: 'Gagal Bayar',
+    iconName: 'XCircle',
+    desc: 'Gagal diproses',
+    activeClass: 'border-red-600 bg-red-50 text-red-900 ring-2 ring-red-600/20',
+    badgeClass: 'bg-red-50 text-red-800 border-red-200',
+  },
 ];
+
+export const STATUS_BADGE_MAP = {
+  'Dalam Antrean': 'bg-slate-100 text-slate-700 border-slate-200',
+  'Dalam Review': 'bg-blue-50 text-blue-700 border-blue-200',
+  'Revisi Proposal': 'bg-orange-50 text-orange-800 border-orange-200',
+  'Menunggu Fisik': 'bg-amber-50 text-amber-800 border-amber-200',
+  'Dana Cair': 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  'Menunggu Evidence': 'bg-violet-50 text-violet-800 border-violet-200',
+  'Menunggu Verif': 'bg-rose-50 text-rose-800 border-rose-200',
+  'Selesai': 'bg-green-50 text-green-800 border-green-200',
+  'Gagal Bayar': 'bg-red-50 text-red-800 border-red-200',
+};
 
 export const formatRupiah = (angka) => {
   if (!angka && angka !== 0) return '';
   return new Intl.NumberFormat('id-ID').format(angka);
 };
 
-export const getStatusClass = (status) => {
-  if (status === 'Menunggu Evidence' || status === 'Menunggu Verif') return 'sw';
-  if (status === 'Selesai') return 'sd';
-  if (status === 'Gagal Bayar') return 'sf';
-  if (status === 'Dalam Review' || status === 'Revisi Proposal') return 'sr';
-  if (status === 'Menunggu Fisik') return 'sn';
-  return 'sq';
+export const getStatusBadgeClass = (status) => {
+  return STATUS_BADGE_MAP[status] || 'bg-slate-100 text-slate-700 border-slate-200';
 };

@@ -1,311 +1,557 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { getStatusClass, formatRupiah, STATUS_OPTIONS } from '../shared/utils';
+import {
+  AlertTriangle,
+  Banknote,
+  Check,
+  CheckCircle2,
+  Clock,
+  Download,
+  ExternalLink,
+  Eye,
+  FileCheck2,
+  FilePenLine,
+  FileText,
+  FileUp,
+  Landmark,
+  Loader2,
+  PackageCheck,
+  Search,
+  Trash2,
+  Upload,
+  XCircle,
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { formatRupiah, STATUS_OPTIONS } from '../shared/utils';
+import { StatusBadge } from '../shared/SharedComponents';
 
-// ─── Detail Modal ─────────────────────────────────────────────────────────────
-export function DetailModal({ proposal, activeRole, onClose, onDeleteComment, showToast, setSelectedProposal, fetchProposals }) {
+const STATUS_ICON_MAP = {
+  Clock,
+  Search,
+  FilePenLine,
+  PackageCheck,
+  Banknote,
+  FileUp,
+  CheckCircle2,
+  XCircle,
+};
+
+export function DetailModal({
+  proposal,
+  activeRole,
+  onClose,
+  onRequestDeleteComment,
+  showToast,
+  setSelectedProposal,
+  fetchProposals,
+}) {
   const [catatanAdmin, setCatatanAdmin] = useState('');
   const [generating, setGenerating] = useState(false);
 
   if (!proposal) return null;
 
+  const ba = proposal.berita_acara || proposal.beritaAcara;
+  const isAdmin = ['master', 'reviewer', 'admin', 'superadmin'].includes(activeRole);
+
   const handleGenerateBA = async () => {
     try {
       setGenerating(true);
       const res = await axios.post(`/api/proposals/${proposal.id}/berita-acara/generate`, {
-        catatan_admin: catatanAdmin
+        catatan_admin: catatanAdmin,
       });
-      showToast('Berita Acara berhasil di-generate!');
-      
-      // Update selectedProposal in-place
+      showToast('Berita Acara berhasil dibuat.', 'success');
+
       if (setSelectedProposal) {
         setSelectedProposal({
           ...proposal,
-          berita_acara: res.data.data
+          berita_acara: res.data.data,
         });
       }
-      
-      // Refresh list
       if (fetchProposals) {
         fetchProposals();
       }
     } catch (e) {
-      let msg = 'Gagal men-generate Berita Acara.';
-      if (e.response?.data?.message) {
-        msg = e.response.data.message;
-      }
-      showToast(msg);
+      const msg = e.response?.data?.message || 'Gagal membuat Berita Acara.';
+      showToast(msg, 'error');
     } finally {
       setGenerating(false);
     }
   };
 
   return (
-    <div className="overlay open" onClick={(e) => { if (e.target.className.includes('overlay')) onClose(); }}>
-      <div className="modal">
-        <div className="mh"><div className="mt">Detail Proposal</div><button className="cx" onClick={onClose}>&#x2715;</button></div>
-        <div className="mb">
-          <div className="ig">
-            <div className="ii"><div className="ik">ID</div><div className="iv" style={{ fontWeight: 600, color: 'var(--t2)', fontSize: '13.5px' }}>{proposal.kode_tiket}</div></div>
-            <div className="ii"><div className="ik">Status</div><div className="iv"><span className={`status ${getStatusClass(proposal.status)}`}>{proposal.status}</span></div></div>
-            {proposal.revisi_deadline && (
-              <div className="ii" style={{ gridColumn: '1 / -1' }}>
-                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '10px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c' }}>
-                  <span style={{ fontSize: '16px' }}>⚠️</span>
-                  <div><strong style={{ fontSize: '13px' }}>Batas Pengerjaan Revisi:</strong> <span style={{ fontSize: '13px', marginLeft: '4px' }}>{new Date(proposal.revisi_deadline).toLocaleString('id-ID')}</span></div>
-                </div>
-              </div>
-            )}
-            <div className="ii"><div className="ik">Pemohon</div><div className="iv">{proposal.user?.name}</div></div>
-            <div className="ii"><div className="ik">Nomor Telepon</div><div className="iv" style={{ fontWeight: 500, color: 'var(--t2)' }}>{proposal.user?.nomor_telepon || '-'}</div></div>
-            <div className="ii"><div className="ik">Kegiatan</div><div className="iv">{proposal.kegiatan}</div></div>
-            <div className="ii"><div className="ik">Tgl Pelaksanaan</div><div className="iv" style={{ fontWeight: 500, color: 'var(--text)' }}>{proposal.tgl_pelaksanaan}</div></div>
-            <div className="ii"><div className="ik">Jenis</div><div className="iv"><span className="tt">{proposal.jenis}</span></div></div>
-            <div className="ii"><div className="ik">Dana Diajukan</div><div className="iv" style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '15px' }}>Rp {formatRupiah(proposal.dana_diajukan)}</div></div>
-            {(proposal.nama_bank || proposal.nomor_rekening || proposal.atas_nama) && (
-              <div className="ii" style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <div className="ik" style={{ marginBottom: '4px' }}>Target Pengiriman Dana (Rekening)</div>
-                <div className="iv" style={{ fontWeight: 600, color: 'var(--text)' }}>
-                  {proposal.nama_bank || '-'} — {proposal.nomor_rekening || '-'} {proposal.atas_nama ? `a.n. ${proposal.atas_nama}` : ''}
-                </div>
-              </div>
-            )}
+    <Dialog open={Boolean(proposal)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Detail Proposal</DialogTitle>
+          <DialogDescription className="font-mono text-xs">
+            {proposal.kode_tiket}
+          </DialogDescription>
+        </DialogHeader>
 
-            <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.5px', marginBottom: '16px', textTransform: 'uppercase' }}>DOKUMEN TERLAMPIR</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="overflow-y-auto px-4 py-4 space-y-5 sm:px-6 sm:py-5">
+          {proposal.revisi_deadline && (
+            <Alert variant="destructive">
+              <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+              <div>
+                <AlertTitle>Batas Pengerjaan Revisi</AlertTitle>
+                <AlertDescription>
+                  {new Date(proposal.revisi_deadline).toLocaleString('id-ID')}
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
+
+          {/* Core metadata grid */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <div className="text-xs font-medium text-muted-foreground">Kode Tiket</div>
+              <div className="mt-1 font-mono text-sm font-semibold text-foreground">
+                {proposal.kode_tiket}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-medium text-muted-foreground">Status Saat Ini</div>
+              <div className="mt-1">
+                <StatusBadge status={proposal.status} />
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-medium text-muted-foreground">Pemohon</div>
+              <div className="mt-1 text-sm font-semibold text-foreground">
+                {proposal.user?.name || '-'}
+              </div>
+              {proposal.user?.instansi && (
+                <div className="text-xs text-muted-foreground">{proposal.user.instansi}</div>
+              )}
+            </div>
+            <div>
+              <div className="text-xs font-medium text-muted-foreground">Nomor Telepon</div>
+              <div className="mt-1 text-sm font-medium text-foreground">
+                {proposal.user?.nomor_telepon || '-'}
+              </div>
+            </div>
+            <div className="sm:col-span-2">
+              <div className="text-xs font-medium text-muted-foreground">Nama Kegiatan</div>
+              <div className="mt-1 text-sm font-semibold text-foreground leading-snug">
+                {proposal.kegiatan}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-medium text-muted-foreground">Tanggal Pelaksanaan</div>
+              <div className="mt-1 text-sm font-medium text-foreground">
+                {proposal.tgl_pelaksanaan || '-'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-medium text-muted-foreground">Skema Pencairan</div>
+              <div className="mt-1">
+                <Badge variant="secondary">{proposal.jenis}</Badge>
+              </div>
+            </div>
+            <div className="sm:col-span-2 rounded-lg border border-border bg-muted/40 p-3.5 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-xs font-medium text-muted-foreground">Dana Diajukan</div>
+                <div className="mt-0.5 text-lg font-extrabold text-primary tabular-nums">
+                  Rp {formatRupiah(proposal.dana_diajukan)}
+                </div>
+              </div>
+              {(proposal.nama_bank || proposal.nomor_rekening || proposal.atas_nama) && (
+                <div className="flex items-start gap-2.5 text-left sm:text-right">
+                  <Landmark className="size-4 text-muted-foreground shrink-0 mt-0.5 sm:hidden" />
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Rekening Tujuan
+                    </div>
+                    <div className="text-sm font-semibold text-foreground">
+                      {proposal.nama_bank || '-'}, {proposal.nomor_rekening || '-'}
+                      {proposal.atas_nama ? ` (a.n. ${proposal.atas_nama})` : ''}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Attached Documents */}
+          <div className="space-y-2.5">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Dokumen Terlampir
+            </h4>
+            {!proposal.file_proposal && !proposal.evidence_dokumen && !proposal.bukti_transfer ? (
+              <p className="text-xs text-muted-foreground italic">Belum ada dokumen terlampir.</p>
+            ) : (
+              <div className="grid gap-2.5">
                 {proposal.file_proposal && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', borderRadius: '8px', padding: '12px 16px', border: '1px solid #d1fae5' }}>
-                    <div style={{ fontWeight: 700, color: '#065f46', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>FILE PROPOSAL</div>
-                    <a href={`/api/preview-file/${proposal.file_proposal}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0ea5e9', fontWeight: 500, fontSize: '13px', textDecoration: 'none' }}>Lihat File &rarr;</a>
+                  <div className="flex flex-col items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                    <div className="flex items-center gap-2.5 text-sm font-semibold text-emerald-900">
+                      <FileText className="size-4 shrink-0 text-emerald-700" />
+                      File Proposal
+                    </div>
+                    <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
+                      <a
+                        href={`/api/preview-file/${proposal.file_proposal}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Lihat File
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </Button>
                   </div>
                 )}
                 {proposal.evidence_dokumen && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fffbeb', borderRadius: '8px', padding: '12px 16px', border: '1px solid #fef3c7' }}>
-                    <div style={{ fontWeight: 700, color: '#92400e', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>FILE LPJ</div>
-                    <a href={`/api/preview-file/${proposal.evidence_dokumen}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0ea5e9', fontWeight: 500, fontSize: '13px', textDecoration: 'none' }}>Lihat File &rarr;</a>
+                  <div className="flex flex-col items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                    <div className="flex items-center gap-2.5 text-sm font-semibold text-amber-950">
+                      <FileText className="size-4 shrink-0 text-amber-700" />
+                      File LPJ / Evidence
+                    </div>
+                    <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
+                      <a
+                        href={`/api/preview-file/${proposal.evidence_dokumen}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Lihat File
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </Button>
                   </div>
                 )}
                 {proposal.bukti_transfer && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0f9ff', borderRadius: '8px', padding: '12px 16px', border: '1px solid #e0f2fe' }}>
-                    <div style={{ fontWeight: 700, color: '#075985', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>BUKTI PEMBAYARAN</div>
-                    <a href={`/api/preview-file/${proposal.bukti_transfer}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0ea5e9', fontWeight: 500, fontSize: '13px', textDecoration: 'none' }}>Lihat File &rarr;</a>
+                  <div className="flex flex-col items-start gap-2.5 rounded-lg border border-sky-200 bg-sky-50/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                    <div className="flex items-center gap-2.5 text-sm font-semibold text-sky-950">
+                      <FileText className="size-4 shrink-0 text-sky-700" />
+                      Bukti Pembayaran
+                    </div>
+                    <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
+                      <a
+                        href={`/api/preview-file/${proposal.bukti_transfer}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Lihat File
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </Button>
                   </div>
                 )}
               </div>
-            </div>
-
-            {proposal.status === 'Selesai' && (
-              <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.5px', marginBottom: '16px', textTransform: 'uppercase' }}>DOKUMEN BERITA ACARA</div>
-                {(() => {
-                  const ba = proposal.berita_acara || proposal.beritaAcara;
-                  if (ba) {
-                    return (
-                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '16px', borderRadius: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                          <div>
-                            <div style={{ fontWeight: 700, color: '#16a34a', fontSize: '13.5px' }}>Nomor: {ba.nomor_ba}</div>
-                            <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px' }}>
-                              Diterbitkan oleh: {ba.generated_by?.name || ba.generated_by_user?.name || (ba.generated_by && typeof ba.generated_by === 'object' ? ba.generated_by.name : 'Admin')}
-                            </div>
-                          </div>
-                          <span style={{ fontSize: '11px', fontWeight: 700, background: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '20px', textTransform: 'uppercase' }}>Terbit</span>
-                        </div>
-                        {ba.catatan_admin && (
-                          <div style={{ fontSize: '12.5px', background: '#ffffff', padding: '10px 12px', borderRadius: '8px', border: '1px solid #d1fae5', color: '#1e293b', marginBottom: '14px', fontStyle: 'italic' }}>
-                            <strong>Catatan:</strong> "{ba.catatan_admin}"
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <a
-                            href={`/api/proposals/${proposal.id}/berita-acara/preview`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-d btn-sm"
-                            style={{ textDecoration: 'none', background: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                          >
-                            👁 Preview
-                          </a>
-                          <a
-                            href={`/api/proposals/${proposal.id}/berita-acara/download`}
-                            className="btn btn-p btn-sm"
-                            style={{ textDecoration: 'none', background: '#16a34a', borderColor: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#ffffff' }}
-                          >
-                            📥 Download
-                          </a>
-                        </div>
-                      </div>
-                    );
-                  } else if (activeRole === 'master' || activeRole === 'reviewer' || activeRole === 'admin' || activeRole === 'superadmin') {
-                    return (
-                      <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '20px', borderRadius: '10px' }}>
-                        <div style={{ fontSize: '13.5px', color: '#475569', marginBottom: '14px', lineHeight: '1.5' }}>
-                          Dokumen Berita Acara belum dibuat. Sebagai Administrator, Anda dapat men-generate dokumen resmi untuk pengajuan ini secara otomatis.
-                        </div>
-                        <div style={{ marginBottom: '14px' }}>
-                          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Catatan Admin (Opsional)</label>
-                          <textarea
-                            className="inp"
-                            value={catatanAdmin}
-                            onChange={e => setCatatanAdmin(e.target.value)}
-                            placeholder="Tambahkan catatan khusus untuk dicantumkan di dokumen Berita Acara..."
-                            rows="2"
-                            style={{ width: '100%', fontSize: '13px', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', resize: 'vertical' }}
-                          />
-                        </div>
-                        <button
-                          className="btn btn-p"
-                          disabled={generating}
-                          onClick={handleGenerateBA}
-                          style={{ width: '100%', justifyContent: 'center', background: '#1a5e1f', borderColor: '#1a5e1f', fontWeight: 700, padding: '10px', fontSize: '13px', color: '#ffffff' }}
-                        >
-                          {generating ? 'Sedang Men-generate...' : '⚡ Generate Berita Acara'}
-                        </button>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic' }}>
-                        Berita Acara resmi sedang diproses oleh Administrator.
-                      </div>
-                    );
-                  }
-                })()}
-              </div>
-            )}
-
-            {proposal.comments && proposal.comments.length > 0 && (
-              <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--line)' }}>
-                <div style={{ background: '#fffbeb', borderRadius: '8px', padding: '16px', border: '1px solid #fef3c7' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#b45309', letterSpacing: '0.5px', marginBottom: '12px', textTransform: 'uppercase' }}>CATATAN DARI ADMIN</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {proposal.comments.map(c => (
-                      <div key={c.id} style={{ fontSize: '13.5px', color: '#92400e', lineHeight: '1.5', whiteSpace: 'pre-wrap', background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #fde68a' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                          <div style={{ fontWeight: 600, fontSize: '12px' }}>{new Date(c.created_at).toLocaleString('id-ID')}</div>
-                          {(activeRole === 'master' || activeRole === 'reviewer') && (
-                            <button className="btn btn-d btn-sm" style={{ padding: '2px 8px', fontSize: '11px', color: '#dc2626', borderColor: '#fecaca', background: '#fef2f2' }} onClick={(e) => { e.stopPropagation(); onDeleteComment(c.id); }}>Hapus</button>
-                          )}
-                        </div>
-                        {c.komentar}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
             )}
           </div>
+
+          {/* Berita Acara Section */}
+          {proposal.status === 'Selesai' && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Dokumen Berita Acara
+                </h4>
+
+                {ba ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-bold text-emerald-900 font-mono">
+                          {ba.nomor_ba}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          Diterbitkan oleh:{' '}
+                          {ba.generated_by?.name ||
+                            ba.generated_by_user?.name ||
+                            (typeof ba.generated_by === 'object' ? ba.generated_by?.name : 'Admin')}
+                        </div>
+                      </div>
+                      <Badge className="bg-emerald-700 text-white">Terbit</Badge>
+                    </div>
+                    {ba.catatan_admin && (
+                      <div className="rounded-lg border border-emerald-200/80 bg-card px-3 py-2.5 text-xs text-foreground italic">
+                        <strong className="not-italic">Catatan:</strong> &quot;{ba.catatan_admin}&quot;
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                      <Button variant="outline" size="sm" asChild className="min-h-10 bg-card sm:min-h-8">
+                        <a
+                          href={`/api/proposals/${proposal.id}/berita-acara/preview`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Eye className="size-3.5" />
+                          Preview PDF
+                        </a>
+                      </Button>
+                      <Button size="sm" asChild className="min-h-10 sm:min-h-8">
+                        <a href={`/api/proposals/${proposal.id}/berita-acara/download`}>
+                          <Download className="size-3.5" />
+                          Download PDF
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                ) : isAdmin ? (
+                  <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-3">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Dokumen Berita Acara belum dibuat. Anda dapat menerbitkan dokumen resmi secara otomatis untuk proposal ini.
+                    </p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="catatan-ba" className="text-xs">
+                        Catatan Admin (Opsional)
+                      </Label>
+                      <Textarea
+                        id="catatan-ba"
+                        value={catatanAdmin}
+                        onChange={(e) => setCatatanAdmin(e.target.value)}
+                        placeholder="Tambahkan catatan khusus untuk dicantumkan pada dokumen Berita Acara..."
+                        rows={2}
+                      />
+                    </div>
+                    <Button
+                      className="w-full"
+                      disabled={generating}
+                      onClick={handleGenerateBA}
+                    >
+                      {generating ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" />
+                          Sedang Membuat Berita Acara...
+                        </>
+                      ) : (
+                        <>
+                          <FileCheck2 className="size-4" />
+                          Generate Berita Acara
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">
+                    Berita Acara resmi sedang diproses oleh Administrator.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Admin Notes */}
+          {proposal.comments && proposal.comments.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800">
+                  Catatan dari Admin
+                </h4>
+                <div className="space-y-2">
+                  {proposal.comments.map((c) => (
+                    <div
+                      key={c.id}
+                      className="rounded-lg border border-amber-200 bg-amber-50/70 p-3.5 text-sm text-amber-950"
+                    >
+                      <div className="mb-1.5 flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-amber-800">
+                          {new Date(c.created_at).toLocaleString('id-ID')}
+                        </span>
+                        {(activeRole === 'master' || activeRole === 'reviewer') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => onRequestDeleteComment(c.id)}
+                          >
+                            <Trash2 className="size-3.5" />
+                            Hapus
+                          </Button>
+                        )}
+                      </div>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{c.komentar}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
-        <div className="mf"><button className="btn btn-d" onClick={onClose}>Tutup</button></div>
-      </div>
-    </div>
+
+        <DialogFooter>
+          <Button variant="outline" className="w-full min-h-11 sm:w-auto sm:min-h-9" onClick={onClose}>
+            Tutup
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-// ─── Status Modal ─────────────────────────────────────────────────────────────
-export function StatusModal({ proposal, onClose, onUpdateStatus, showToast }) {
+export function StatusModal({ proposal, onClose, onUpdateStatus, showToast, onRefresh }) {
   const [decisionStatus, setDecisionStatus] = useState(proposal?.status || '');
   const [catatanRevisi, setCatatanRevisi] = useState('');
   const [uploadFile, setUploadFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   if (!proposal) return null;
 
-  const handleSave = () => {
-    if (decisionStatus === 'Dana Cair' && uploadFile) {
-      const formData = new FormData();
-      formData.append('bukti_transfer', uploadFile);
-      axios.post(`/api/proposals/${proposal.id}/upload-bukti`, formData)
-        .then(() => { showToast('Bukti transfer berhasil diupload dan status diperbarui!'); onClose(); })
-        .catch(() => showToast('Gagal upload bukti transfer (Pastikan format PDF Max 5MB)'));
-    } else {
-      onUpdateStatus(proposal.id, decisionStatus, catatanRevisi);
+  const needsNote = ['Dalam Review', 'Revisi Proposal', 'Menunggu Evidence'].includes(decisionStatus);
+  const isSaveDisabled =
+    submitting || (decisionStatus === 'Dana Cair' && !uploadFile && proposal.status !== 'Dana Cair');
+
+  const handleSave = async () => {
+    setSubmitting(true);
+    try {
+      if (decisionStatus === 'Dana Cair' && uploadFile) {
+        const formData = new FormData();
+        formData.append('bukti_transfer', uploadFile);
+        await axios.post(`/api/proposals/${proposal.id}/upload-bukti`, formData);
+        showToast('Bukti transfer berhasil diunggah dan status diperbarui.', 'success');
+        if (onRefresh) onRefresh();
+        onClose();
+      } else {
+        await onUpdateStatus(proposal.id, decisionStatus, catatanRevisi);
+      }
+    } catch (e) {
+      showToast('Gagal mengunggah bukti transfer. Pastikan format PDF maks. 5MB.', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const needsNote = ['Dalam Review', 'Revisi Proposal', 'Menunggu Evidence'].includes(decisionStatus);
-  const isSaveDisabled = decisionStatus === 'Dana Cair' && !uploadFile && proposal.status !== 'Dana Cair';
-
   return (
-    <div className="overlay open" onClick={(e) => { if (e.target.className.includes('overlay')) onClose(); }}>
-      <div className="modal">
-        <div className="mh"><div className="mt">Ubah Status Proposal</div><button className="cx" onClick={onClose}>&#x2715;</button></div>
-        <div className="mb" style={{ padding: '24px' }}>
-          {/* Proposal info strip */}
-          <div style={{ marginBottom: '20px', background: '#f8fafc', padding: '14px 16px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ background: '#e0f2fe', color: '#0284c7', padding: '8px', borderRadius: '8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+    <Dialog open={Boolean(proposal)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Ubah Status Proposal</DialogTitle>
+          <DialogDescription>
+            Pilih tahap pemrosesan terbaru untuk pengajuan ini.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="overflow-y-auto px-4 py-4 space-y-5 sm:px-6 sm:py-5">
+          {/* Proposal summary */}
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/40 p-3.5">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <FileText className="size-4.5" />
             </div>
-            <div>
-              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '13.5px' }}>{proposal.kode_tiket}</div>
-              <div style={{ color: '#64748b', fontSize: '12.5px', marginTop: '1px' }}>{proposal.kegiatan}</div>
+            <div className="min-w-0 flex-1">
+              <div className="font-mono text-xs font-bold text-foreground">
+                {proposal.kode_tiket}
+              </div>
+              <div className="truncate text-sm font-medium text-muted-foreground">
+                {proposal.kegiatan}
+              </div>
             </div>
-            <span className={`status ${getStatusClass(proposal.status)}`} style={{ marginLeft: 'auto', flexShrink: 0 }}>{proposal.status}</span>
+            <StatusBadge status={proposal.status} />
           </div>
 
-          {/* Status grid picker */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '12px', fontWeight: 700, color: '#0f172a', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Pilih Status Baru</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-              {STATUS_OPTIONS.map(opt => {
+          {/* Status picker */}
+          <div className="space-y-2.5">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Pilih Status Baru
+            </Label>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              {STATUS_OPTIONS.map((opt) => {
+                const Icon = STATUS_ICON_MAP[opt.iconName] || Clock;
                 const isSelected = decisionStatus === opt.value;
                 const isCurrent = proposal.status === opt.value;
+
                 return (
                   <button
                     key={opt.value}
+                    type="button"
                     onClick={() => setDecisionStatus(opt.value)}
-                    style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                      gap: '5px', padding: '11px 12px', borderRadius: '10px', cursor: 'pointer',
-                      border: isSelected ? `2px solid ${opt.color}` : `1.5px solid ${isCurrent ? opt.border : '#e9eef5'}`,
-                      background: isSelected ? opt.bg : (isCurrent ? `${opt.bg}99` : '#fafafa'),
-                      boxShadow: isSelected ? `0 0 0 3px ${opt.color}1a, 0 2px 8px ${opt.color}18` : 'none',
-                      transition: 'all 0.15s cubic-bezier(0.4,0,0.2,1)', textAlign: 'left',
-                      position: 'relative', width: '100%',
-                    }}
-                    onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.borderColor = opt.border; e.currentTarget.style.background = opt.bg; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
-                    onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.borderColor = isCurrent ? opt.border : '#e9eef5'; e.currentTarget.style.background = isCurrent ? `${opt.bg}99` : '#fafafa'; e.currentTarget.style.transform = 'none'; } }}
+                    className={cn(
+                      'relative flex flex-col items-start gap-1.5 rounded-xl border p-3 text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      isSelected
+                        ? opt.activeClass
+                        : 'border-border bg-card hover:border-primary/40 hover:bg-muted/40'
+                    )}
                   >
-                    {isCurrent && !isSelected && (
-                      <span style={{ position: 'absolute', top: '6px', right: '7px', fontSize: '9px', fontWeight: 700, color: opt.color, background: opt.bg, border: `1px solid ${opt.border}`, borderRadius: '4px', padding: '1px 5px', letterSpacing: '0.2px' }}>Saat ini</span>
-                    )}
-                    {isSelected && (
-                      <span style={{ position: 'absolute', top: '7px', right: '8px', color: opt.color }}>
-                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
-                      </span>
-                    )}
-                    <span style={{ fontSize: '20px', lineHeight: 1 }}>{opt.icon}</span>
-                    <span style={{ fontWeight: 700, fontSize: '12px', color: isSelected ? opt.color : '#1e293b', lineHeight: 1.3 }}>{opt.value}</span>
-                    <span style={{ fontSize: '10.5px', color: '#94a3b8', fontWeight: 400 }}>{opt.desc}</span>
+                    <div className="flex w-full items-center justify-between">
+                      <Icon className="size-4 shrink-0" />
+                      {isSelected ? (
+                        <Check className="size-4 shrink-0" />
+                      ) : isCurrent ? (
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                          Saat ini
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="text-xs font-bold leading-snug">{opt.value}</div>
+                    <div className="text-[11px] text-muted-foreground leading-tight">{opt.desc}</div>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Conditional note field */}
+          {/* Revision note */}
           {needsNote && (
-            <div style={{ marginBottom: '20px' }}>
-              <label className="lbl" style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: 'var(--text)' }}>Catatan Revisi / Pesan <span style={{ color: '#ef4444' }}>*</span></label>
-              <textarea className="inp" value={catatanRevisi} onChange={e => setCatatanRevisi(e.target.value)} rows="3" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', resize: 'vertical' }} placeholder="Tuliskan catatan atau instruksi perbaikan..."></textarea>
+            <div className="space-y-2">
+              <Label htmlFor="status-note">
+                Catatan Revisi / Pesan <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="status-note"
+                value={catatanRevisi}
+                onChange={(e) => setCatatanRevisi(e.target.value)}
+                rows={3}
+                placeholder="Tuliskan catatan atau instruksi perbaikan untuk pemohon..."
+              />
             </div>
           )}
 
-          {/* Dana Cair upload */}
+          {/* Proof of transfer upload */}
           {decisionStatus === 'Dana Cair' && (
-            <div style={{ marginBottom: '20px', padding: '14px 16px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px' }}>
-              <label className="lbl" style={{ color: '#0369a1', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Upload Bukti Pengiriman Dana (*.PDF, Max 5MB)</label>
-              <input type="file" className="inp" accept="application/pdf" onChange={e => setUploadFile(e.target.files[0])} style={{ width: '100%', padding: '10px', background: '#fff', border: '1px dashed #7dd3fc', borderRadius: '6px' }} />
+            <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-4 space-y-2.5">
+              <Label htmlFor="bukti-transfer-file" className="text-sky-900">
+                Upload Bukti Pengiriman Dana (PDF, Maks. 5MB)
+              </Label>
+              <label
+                htmlFor="bukti-transfer-file"
+                className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-dashed border-sky-300 bg-card px-4 py-3 text-sm transition-colors hover:bg-sky-50/50"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Upload className="size-4 shrink-0 text-sky-700" />
+                  <span className="truncate font-medium text-foreground">
+                    {uploadFile ? uploadFile.name : 'Pilih berkas bukti transfer (.pdf)'}
+                  </span>
+                </div>
+                <span className="text-xs font-semibold text-sky-700 shrink-0">Browse</span>
+              </label>
+              <input
+                id="bukti-transfer-file"
+                type="file"
+                accept="application/pdf"
+                className="sr-only"
+                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+              />
             </div>
           )}
-
-          {/* Actions */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--line)' }}>
-            <button className="btn btn-d" style={{ padding: '10px 22px', fontSize: '14px' }} onClick={onClose}>Batal</button>
-            <button className="btn btn-p" style={{ padding: '10px 28px', fontSize: '14px', fontWeight: 600, borderRadius: '8px' }} disabled={isSaveDisabled} onClick={handleSave}>Simpan Status</button>
-          </div>
         </div>
-      </div>
-    </div>
+
+        <DialogFooter>
+          <Button variant="outline" className="w-full min-h-11 sm:w-auto sm:min-h-9" onClick={onClose} disabled={submitting}>
+            Batal
+          </Button>
+          <Button className="w-full min-h-11 sm:w-auto sm:min-h-9" disabled={isSaveDisabled} onClick={handleSave}>
+            {submitting && <Loader2 className="size-4 animate-spin" />}
+            Simpan Status
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

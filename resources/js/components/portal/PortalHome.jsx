@@ -1,134 +1,247 @@
 import React from 'react';
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle2,
+  ChevronRight,
+  FileText,
+  FolderOpen,
+  Plus,
+  Search,
+  Tag,
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { EmptyState, Pagination, StatusBadge } from '../shared/SharedComponents';
 
-export const PortalHome = ({ 
-  user, proposals, filteredProposals, 
-  searchQuery, setSearchQuery, 
-  totalCount, actionCount, doneCount,
-  setPortalTab, setSelectedProposal,
-  currentPage, totalPages, fetchProposals,
-  getCardStatusClass, getStatusClass, formatRupiah
+export const PortalHome = ({
+  user,
+  loading,
+  filteredProposals,
+  searchQuery,
+  setSearchQuery,
+  totalCount,
+  actionCount,
+  doneCount,
+  setPortalTab,
+  setSelectedProposal,
+  currentPage,
+  totalPages,
+  fetchProposals,
+  getCardBorderAccent,
+  formatRupiah,
 }) => {
   return (
-    <div className="user-portal-content">
+    <div className="space-y-4 sm:space-y-6">
       {/* Greeting Banner */}
-      <div className="up-greeting">
-        <div className="up-greeting-hi">Selamat datang,</div>
-        <div className="up-greeting-name">{user?.name || 'Pemohon'} 👋</div>
-        <div className="up-greeting-sub">
-          Pantau status pengajuan Anda secara real-time di sini.
-          {actionCount > 0 && ` Ada ${actionCount} proposal yang butuh tindakan!`}
+      <div className="rounded-2xl bg-sidebar px-4 py-5 text-white shadow-sm sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div>
+            <div className="text-xs font-medium text-white/75">Selamat datang kembali,</div>
+            <div className="mt-0.5 text-xl font-extrabold tracking-tight sm:mt-1 sm:text-2xl">
+              {user?.name || 'Pemohon'}
+            </div>
+            <p className="mt-1 text-xs text-white/85 leading-relaxed sm:mt-1.5 sm:text-sm">
+              Pantau status pengajuan proposal Anda secara langsung di sini.
+              {actionCount > 0 && (
+                <strong className="ml-1 font-semibold text-amber-200">
+                  Ada {actionCount} proposal yang memerlukan tindakan Anda.
+                </strong>
+              )}
+            </p>
+          </div>
+          <Button
+            onClick={() => setPortalTab('new')}
+            className="h-11 w-full shrink-0 bg-white text-[#144518] hover:bg-white/90 font-bold sm:w-auto sm:self-center"
+          >
+            <Plus className="size-4" />
+            Ajukan Proposal
+          </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="up-stats">
-        <div className="up-stat-card blue">
-          <div className="up-sc-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-          </div>
-          <div className="up-stat-label">Total Diajukan</div>
-          <div className="up-stat-val">{totalCount}</div>
-        </div>
-        <div className="up-stat-card amber">
-          <div className="up-sc-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-          </div>
-          <div className="up-stat-label">Perlu Tindakan</div>
-          <div className="up-stat-val">{actionCount}</div>
-        </div>
-        <div className="up-stat-card green">
-          <div className="up-sc-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          </div>
-          <div className="up-stat-label">Selesai</div>
-          <div className="up-stat-val">{doneCount}</div>
-        </div>
+      {/* Stat Cards: compact 3-col on mobile, spacious on sm+ */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <Card>
+          <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="order-2 sm:order-1 min-w-0">
+              <div className="truncate text-[11px] font-semibold text-muted-foreground sm:text-xs">
+                Total
+              </div>
+              <div className="mt-0.5 text-xl font-extrabold text-foreground tabular-nums sm:mt-1 sm:text-2xl">
+                {totalCount}
+              </div>
+            </div>
+            <div className="order-1 sm:order-2 flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 sm:size-10">
+              <FileText className="size-4 sm:size-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="order-2 sm:order-1 min-w-0">
+              <div className="truncate text-[11px] font-semibold text-muted-foreground sm:text-xs">
+                Tindakan
+              </div>
+              <div className="mt-0.5 text-xl font-extrabold text-amber-700 tabular-nums sm:mt-1 sm:text-2xl">
+                {actionCount}
+              </div>
+            </div>
+            <div className="order-1 sm:order-2 flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 sm:size-10">
+              <AlertCircle className="size-4 sm:size-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="order-2 sm:order-1 min-w-0">
+              <div className="truncate text-[11px] font-semibold text-muted-foreground sm:text-xs">
+                Selesai
+              </div>
+              <div className="mt-0.5 text-xl font-extrabold text-primary tabular-nums sm:mt-1 sm:text-2xl">
+                {doneCount}
+              </div>
+            </div>
+            <div className="order-1 sm:order-2 flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 sm:size-10">
+              <CheckCircle2 className="size-4 sm:size-5" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search */}
-      <div className="up-search-wrap">
-        <span className="up-search-icon">🔍</span>
-        <input
-          className="up-search-input"
+      <div className="relative">
+        <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Cari kegiatan, ID, atau jenis..."
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Cari nama kegiatan, kode tiket, atau skema..."
+          className="h-11 pl-10 bg-card"
+          aria-label="Cari proposal saya"
         />
       </div>
 
-      {/* Proposal List */}
-      <div className="up-section-header">
-        <div className="up-section-title">Daftar Proposal Saya</div>
-        <div className="up-section-count">
-          {searchQuery ? `${filteredProposals.length} dari ${totalCount}` : `${totalCount} proposal`}
-        </div>
+      {/* List header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-foreground">Daftar Proposal Saya</h2>
+        <span className="text-xs font-semibold text-muted-foreground">
+          {searchQuery
+            ? `${filteredProposals.length} dari ${totalCount} data`
+            : `${totalCount} proposal`}
+        </span>
       </div>
 
-      {filteredProposals.length === 0 ? (
-        <div className="up-empty">
-          <div className="up-empty-icon">{searchQuery ? '🔍' : '📋'}</div>
-          <div className="up-empty-title">
-            {searchQuery ? 'Tidak ditemukan' : 'Belum ada proposal'}
-          </div>
-          <div className="up-empty-desc">
-            {searchQuery
-              ? `Tidak ada proposal yang cocok dengan "${searchQuery}"`
-              : 'Klik tombol + di bawah untuk mengajukan proposal pertama Anda.'}
-          </div>
-          {!searchQuery && (
-            <button
-              className="up-btn-submit"
-              style={{ margin: '0 auto' }}
-              onClick={() => setPortalTab('new')}
-            >
-              + Ajukan Proposal Baru
-            </button>
-          )}
+      {/* Proposal cards */}
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((idx) => (
+            <Card key={idx}>
+              <CardContent className="p-5 space-y-3">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-5 w-24" />
+                </div>
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
+      ) : filteredProposals.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={searchQuery ? Search : FolderOpen}
+            title={searchQuery ? 'Proposal tidak ditemukan' : 'Belum ada proposal diajukan'}
+            description={
+              searchQuery
+                ? `Tidak ada proposal yang cocok dengan kata kunci "${searchQuery}".`
+                : 'Klik tombol di bawah untuk mulai membuat pengajuan proposal pertama Anda.'
+            }
+            action={
+              !searchQuery && (
+                <Button onClick={() => setPortalTab('new')}>
+                  <Plus className="size-4" />
+                  Ajukan Proposal Baru
+                </Button>
+              )
+            }
+          />
+        </Card>
       ) : (
-        <div className="up-card-list">
-          {filteredProposals.map(p => (
-            <div
+        <div className="space-y-3">
+          {filteredProposals.map((p) => (
+            <button
               key={p.id}
-              className={`up-proposal-card ${getCardStatusClass(p.status)}`}
-              onClick={() => { setSelectedProposal(p); setPortalTab('detail'); }}
+              type="button"
+              onClick={() => {
+                setSelectedProposal(p);
+                setPortalTab('detail');
+              }}
+              className={cn(
+                'w-full text-left rounded-xl border border-border bg-card p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm active:scale-[0.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-5',
+                getCardBorderAccent(p.status)
+              )}
             >
-              <div className="up-card-top">
-                <span className="up-card-id">{p.kode_tiket}</span>
-                <span className={`status ${getStatusClass(p.status)}`}>{p.status}</span>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-mono text-xs font-bold text-primary">{p.kode_tiket}</span>
+                <StatusBadge status={p.status} />
               </div>
-              <div className="up-card-kegiatan">{p.kegiatan}</div>
-              <div className="up-card-meta">
-                <div className="up-card-meta-item">
-                  <span className="up-card-meta-icon">📅</span>
+
+              <div className="mt-2 text-base font-bold text-foreground leading-snug">
+                {p.kegiatan}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="size-3.5" />
                   {p.tgl_pelaksanaan || '-'}
-                </div>
-                <div className="up-card-meta-item">
-                  <span className="up-card-meta-icon">📂</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Tag className="size-3.5" />
                   {p.jenis}
-                </div>
+                </span>
                 {p.revisi_deadline && (
-                  <span className="up-action-needed" style={{ color: '#b91c1c', background: '#fee2e2' }}>⚠ Batas: {new Date(p.revisi_deadline).toLocaleDateString('id-ID')}</span>
+                  <span className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-0.5 font-semibold text-red-700 border border-red-200">
+                    <AlertCircle className="size-3" />
+                    Batas: {new Date(p.revisi_deadline).toLocaleDateString('id-ID')}
+                  </span>
                 )}
                 {p.status === 'Menunggu Evidence' && !p.revisi_deadline && (
-                  <span className="up-action-needed">⚠ Upload LPJ</span>
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 border border-amber-200">
+                    <AlertCircle className="size-3" />
+                    Perlu Upload LPJ
+                  </span>
                 )}
               </div>
-              <div className="up-card-dana">
+
+              <div className="mt-4 flex items-center justify-between border-t border-border/70 pt-3">
                 <div>
-                  <div className="up-card-dana-label">Dana Diajukan</div>
-                  <div>Rp {formatRupiah(p.dana_diajukan)}</div>
+                  <div className="text-[11px] font-medium text-muted-foreground">Dana Diajukan</div>
+                  <div className="text-sm font-extrabold text-foreground tabular-nums">
+                    Rp {formatRupiah(p.dana_diajukan)}
+                  </div>
                 </div>
-                <span className="up-card-arrow">›</span>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                  Lihat Detail
+                  <ChevronRight className="size-4" />
+                </span>
               </div>
-            </div>
+            </button>
           ))}
+
           {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', padding: '16px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <button className="btn btn-d btn-sm" disabled={currentPage === 1} onClick={() => fetchProposals(currentPage - 1)}>← Sebelumnya</button>
-              <span style={{ fontSize: '13px', color: 'var(--t2)', fontWeight: 500 }}>Hal {currentPage} dari {totalPages}</span>
-              <button className="btn btn-d btn-sm" disabled={currentPage === totalPages} onClick={() => fetchProposals(currentPage + 1)}>Selanjutnya →</button>
-            </div>
+            <Card className="overflow-hidden">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onFetch={fetchProposals}
+              />
+            </Card>
           )}
         </div>
       )}
