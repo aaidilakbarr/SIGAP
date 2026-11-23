@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Activity,
+  ChevronLeft,
   Database,
   FileCheck2,
   FileSpreadsheet,
@@ -11,8 +12,6 @@ import {
   LogOut,
   Menu,
   Newspaper,
-  PanelLeftClose,
-  PanelLeftOpen,
   Plus,
   ShieldCheck,
   UserCheck,
@@ -94,30 +93,41 @@ function SidebarNav({
   }
 
   return (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div
-        className={cn(
-          'flex items-center border-b border-sidebar-border bg-white transition-all',
-          collapsed ? 'justify-center px-2 py-3' : 'px-4 py-3'
-        )}
-      >
-        {collapsed ? (
-          <img src={webIcon} alt="SIGAP" className="h-9 w-9 object-contain" />
-        ) : (
-          <img src={bannerLogo} alt="SIGAP" className="block h-auto w-full max-w-[200px]" />
-        )}
+    <div className="flex h-full flex-col overflow-hidden bg-sidebar text-sidebar-foreground">
+      {/* Brand header with smooth logo crossfade */}
+      <div className="relative flex h-16 shrink-0 items-center justify-center overflow-hidden border-b border-sidebar-border bg-white px-4">
+        <img
+          src={bannerLogo}
+          alt="SIGAP"
+          className={cn(
+            'h-auto w-full max-w-[188px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+            collapsed ? 'pointer-events-none scale-90 opacity-0' : 'scale-100 opacity-100'
+          )}
+        />
+        <img
+          src={webIcon}
+          alt="SIGAP"
+          className={cn(
+            'absolute h-9 w-9 object-contain transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+            collapsed ? 'scale-100 opacity-100' : 'pointer-events-none scale-75 opacity-0'
+          )}
+        />
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi utama">
-        {!collapsed && (
-          <div className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/60">
-            Menu
-          </div>
-        )}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label="Navigasi utama">
+        <div
+          className={cn(
+            'overflow-hidden px-3 text-[11px] font-semibold uppercase tracking-wider text-white/60 transition-all duration-200 ease-out motion-reduce:transition-none',
+            collapsed ? 'mb-0 max-h-0 opacity-0' : 'mb-2 max-h-6 opacity-100'
+          )}
+        >
+          Menu
+        </div>
         <div className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.key;
+            const hasCount = typeof item.count === 'number';
             return (
               <button
                 key={item.key}
@@ -126,29 +136,44 @@ function SidebarNav({
                 title={collapsed ? item.label : undefined}
                 aria-label={item.label}
                 className={cn(
-                  'relative flex w-full min-h-11 items-center rounded-lg text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
-                  collapsed ? 'justify-center px-0 py-2.5' : 'justify-between gap-2.5 px-3 py-2.5 text-left',
+                  'group relative flex w-full min-h-11 items-center rounded-lg py-2.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 active:scale-[0.98] motion-reduce:transition-none',
+                  collapsed ? 'px-[17px]' : 'px-3 text-left',
                   isActive
                     ? 'bg-white text-[#144518] font-semibold shadow-xs'
                     : 'text-white/85 hover:bg-white/10 hover:text-white'
                 )}
               >
-                <span className={cn('flex items-center', collapsed ? 'justify-center' : 'gap-2.5 truncate')}>
-                  <Icon className="size-4.5 shrink-0" />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
+                <Icon className="size-4.5 shrink-0 transition-transform duration-200 group-hover:scale-105" />
+                <span
+                  className={cn(
+                    'overflow-hidden whitespace-nowrap truncate transition-all duration-250 ease-out motion-reduce:transition-none',
+                    collapsed
+                      ? 'ml-0 max-w-0 -translate-x-1.5 opacity-0'
+                      : 'ml-2.5 max-w-[155px] translate-x-0 opacity-100'
+                  )}
+                >
+                  {item.label}
                 </span>
-                {!collapsed && typeof item.count === 'number' && (
+                {hasCount && (
                   <span
                     className={cn(
-                      'rounded-md px-2 py-0.5 text-xs font-bold tabular-nums',
-                      isActive ? 'bg-[#1a5e1f]/12 text-[#1a5e1f]' : 'bg-white/15 text-white'
+                      'overflow-hidden rounded-md py-0.5 text-xs font-bold tabular-nums transition-all duration-200 ease-out motion-reduce:transition-none',
+                      isActive ? 'bg-[#1a5e1f]/12 text-[#1a5e1f]' : 'bg-white/15 text-white',
+                      collapsed
+                        ? 'ml-0 max-w-0 scale-75 px-0 opacity-0'
+                        : 'ml-auto max-w-12 scale-100 px-2 opacity-100'
                     )}
                   >
                     {item.count}
                   </span>
                 )}
-                {collapsed && typeof item.count === 'number' && item.count > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex size-2 rounded-full bg-amber-300" />
+                {hasCount && item.count > 0 && (
+                  <span
+                    className={cn(
+                      'absolute top-2 right-2 flex size-2 rounded-full bg-amber-300 transition-all duration-200 ease-out motion-reduce:transition-none',
+                      collapsed ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'
+                    )}
+                  />
                 )}
               </button>
             );
@@ -156,34 +181,50 @@ function SidebarNav({
         </div>
       </nav>
 
-      <div className={cn('border-t border-sidebar-border space-y-3', collapsed ? 'p-3' : 'p-4')}>
+      <div className="border-t border-sidebar-border p-3.5 space-y-3">
         <div
-          className={cn('flex items-center', collapsed ? 'justify-center' : 'gap-3')}
+          className={cn(
+            'flex items-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+            collapsed ? 'px-1.5' : 'px-0.5'
+          )}
           title={collapsed ? `${name} (${role})` : undefined}
         >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/15 text-xs font-bold text-white">
             {dot}
           </div>
-          {!collapsed && (
-            <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-white">{name}</div>
-              <div className="truncate text-xs text-white/70">{role}</div>
-            </div>
-          )}
+          <div
+            className={cn(
+              'min-w-0 overflow-hidden whitespace-nowrap transition-all duration-250 ease-out motion-reduce:transition-none',
+              collapsed
+                ? 'ml-0 max-w-0 -translate-x-1.5 opacity-0'
+                : 'ml-3 max-w-[160px] translate-x-0 opacity-100'
+            )}
+          >
+            <div className="truncate text-sm font-semibold text-white">{name}</div>
+            <div className="truncate text-xs text-white/70">{role}</div>
+          </div>
         </div>
         <Button
           variant="outline"
-          size={collapsed ? 'icon' : 'default'}
           onClick={handleLogout}
           title="Logout / Ganti Sesi"
           aria-label="Logout"
           className={cn(
-            'min-h-10 border-white/25 bg-white/10 text-white hover:bg-red-600 hover:border-red-600 hover:text-white',
-            collapsed ? 'w-full' : 'w-full'
+            'min-h-10 w-full gap-0 overflow-hidden border-white/25 bg-white/10 text-white transition-all duration-250 hover:bg-red-600 hover:border-red-600 hover:text-white active:scale-[0.98] motion-reduce:transition-none',
+            collapsed ? 'px-0 justify-center' : 'px-3 justify-center'
           )}
         >
-          <LogOut className="size-4" />
-          {!collapsed && <span>Logout / Ganti Sesi</span>}
+          <LogOut className="size-4 shrink-0" />
+          <span
+            className={cn(
+              'overflow-hidden whitespace-nowrap transition-all duration-250 ease-out motion-reduce:transition-none',
+              collapsed
+                ? 'ml-0 max-w-0 -translate-x-1 opacity-0'
+                : 'ml-2 max-w-[150px] translate-x-0 opacity-100'
+            )}
+          >
+            Logout / Ganti Sesi
+          </span>
         </Button>
       </div>
     </div>
@@ -539,7 +580,7 @@ export default function App() {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          'hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block lg:border-r lg:border-sidebar-border transition-[width] duration-200',
+          'hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block lg:border-r lg:border-sidebar-border transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
           sidebarCollapsed ? 'lg:w-[76px]' : 'lg:w-64'
         )}
       >
@@ -555,6 +596,23 @@ export default function App() {
           handleLogout={handleLogout}
           collapsed={sidebarCollapsed}
         />
+
+        {/* Mid-edge clean collapse toggle handle */}
+        <button
+          type="button"
+          onClick={toggleSidebarCollapsed}
+          title={sidebarCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
+          aria-label={sidebarCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
+          aria-expanded={!sidebarCollapsed}
+          className="absolute top-1/2 -right-3.5 z-40 hidden size-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-all duration-200 ease-out hover:scale-110 hover:border-primary/40 hover:bg-primary hover:text-white hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex cursor-pointer motion-reduce:transition-none"
+        >
+          <ChevronLeft
+            className={cn(
+              'size-4 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+              sidebarCollapsed && 'rotate-180'
+            )}
+          />
+        </button>
       </aside>
 
       {/* Mobile Sidebar Sheet */}
@@ -581,7 +639,7 @@ export default function App() {
       {/* Main Content Area */}
       <div
         className={cn(
-          'flex min-w-0 flex-1 flex-col transition-[padding] duration-200',
+          'flex min-w-0 flex-1 flex-col transition-[padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
           sidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-64'
         )}
       >
@@ -595,20 +653,6 @@ export default function App() {
             >
               <Menu className="size-5" />
               <span className="text-xs font-semibold">Menu</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="hidden size-10 shrink-0 lg:inline-flex"
-              onClick={toggleSidebarCollapsed}
-              title={sidebarCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
-              aria-label={sidebarCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen className="size-4.5" />
-              ) : (
-                <PanelLeftClose className="size-4.5" />
-              )}
             </Button>
             <div className="min-w-0">
               <h1 className="truncate text-base font-extrabold tracking-tight text-foreground sm:text-xl">
