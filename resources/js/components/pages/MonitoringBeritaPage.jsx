@@ -60,9 +60,9 @@ import { EmptyState } from '../shared/SharedComponents';
 const STORAGE_KEY = 'sigap_monitoring_berita_items';
 
 const SENTIMENT_STYLES = {
-  Positif: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  Netral: 'bg-slate-100 text-slate-700 border-slate-200',
-  'Perlu Perhatian': 'bg-amber-50 text-amber-800 border-amber-200',
+  Positif: 'bg-emerald-700 text-white border-transparent',
+  Netral: 'bg-slate-600 text-white border-transparent',
+  'Perlu Perhatian': 'bg-amber-600 text-white border-transparent',
 };
 
 const EMPTY_FORM = {

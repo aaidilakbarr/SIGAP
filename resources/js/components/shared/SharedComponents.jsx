@@ -18,8 +18,7 @@ import { getStatusBadgeClass } from './utils';
 export function StatusBadge({ status, className }) {
   return (
     <Badge
-      variant="outline"
-      className={cn('font-semibold px-2.5 py-0.5 text-xs', getStatusBadgeClass(status), className)}
+      className={cn('font-bold px-2.5 py-0.5 text-xs', getStatusBadgeClass(status), className)}
     >
       {status}
     </Badge>

@@ -86,18 +86,18 @@ function QuickStatusBar({ filterStatus, setFilterStatus }) {
 function getLogActionStyle(action = '') {
   const lower = String(action).toLowerCase();
   if (lower.includes('hapus') || lower.includes('delete') || lower.includes('gagal')) {
-    return 'bg-red-50 text-red-800 border-red-200';
+    return 'bg-red-600 text-white border-transparent';
   }
   if (lower.includes('berita') || lower.includes('selesai') || lower.includes('verif')) {
-    return 'bg-emerald-50 text-emerald-800 border-emerald-200';
+    return 'bg-emerald-700 text-white border-transparent';
   }
   if (lower.includes('status') || lower.includes('update') || lower.includes('revisi')) {
-    return 'bg-amber-50 text-amber-800 border-amber-200';
+    return 'bg-amber-600 text-white border-transparent';
   }
   if (lower.includes('upload') || lower.includes('buat') || lower.includes('ajukan') || lower.includes('create')) {
-    return 'bg-blue-50 text-blue-800 border-blue-200';
+    return 'bg-blue-600 text-white border-transparent';
   }
-  return 'bg-slate-100 text-slate-700 border-slate-200';
+  return 'bg-slate-600 text-white border-transparent';
 }
 
 export function ProposalsPage({

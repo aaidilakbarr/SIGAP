@@ -78,15 +78,15 @@ export const STATUS_OPTIONS = [
 ];
 
 export const STATUS_BADGE_MAP = {
-  'Dalam Antrean': 'bg-slate-100 text-slate-700 border-slate-200',
-  'Dalam Review': 'bg-blue-50 text-blue-700 border-blue-200',
-  'Revisi Proposal': 'bg-orange-50 text-orange-800 border-orange-200',
-  'Menunggu Fisik': 'bg-amber-50 text-amber-800 border-amber-200',
-  'Dana Cair': 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  'Menunggu Evidence': 'bg-violet-50 text-violet-800 border-violet-200',
-  'Menunggu Verif': 'bg-rose-50 text-rose-800 border-rose-200',
-  'Selesai': 'bg-green-50 text-green-800 border-green-200',
-  'Gagal Bayar': 'bg-red-50 text-red-800 border-red-200',
+  'Dalam Antrean': 'bg-slate-600 text-white border-transparent',
+  'Dalam Review': 'bg-blue-600 text-white border-transparent',
+  'Revisi Proposal': 'bg-orange-600 text-white border-transparent',
+  'Menunggu Fisik': 'bg-amber-600 text-white border-transparent',
+  'Dana Cair': 'bg-emerald-700 text-white border-transparent',
+  'Menunggu Evidence': 'bg-violet-600 text-white border-transparent',
+  'Menunggu Verif': 'bg-rose-600 text-white border-transparent',
+  'Selesai': 'bg-[#1a5e1f] text-white border-transparent',
+  'Gagal Bayar': 'bg-red-600 text-white border-transparent',
 };
 
 export const formatRupiah = (angka) => {
@@ -95,7 +95,7 @@ export const formatRupiah = (angka) => {
 };
 
 export const getStatusBadgeClass = (status) => {
-  return STATUS_BADGE_MAP[status] || 'bg-slate-100 text-slate-700 border-slate-200';
+  return STATUS_BADGE_MAP[status] || 'bg-slate-600 text-white border-transparent';
 };
 
 export const encodeStoragePath = (path = '') => {

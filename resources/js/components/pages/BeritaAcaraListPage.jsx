@@ -54,7 +54,7 @@ export function BeritaAcaraListPage() {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-bold text-foreground sm:text-base">Daftar Berita Acara</h2>
-            <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800 tabular-nums">
+            <span className="rounded-md bg-[#1a5e1f] px-2.5 py-0.5 text-xs font-bold text-white tabular-nums shadow-2xs">
               {totalItems} terbit
             </span>
           </div>
