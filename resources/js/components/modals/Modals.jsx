@@ -36,7 +36,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { formatRupiah, STATUS_OPTIONS } from '../shared/utils';
+import {
+  buildBeritaAcaraPreviewUrl,
+  buildFilePreviewUrl,
+  formatRupiah,
+  STATUS_OPTIONS,
+} from '../shared/utils';
 import { StatusBadge } from '../shared/SharedComponents';
 
 const STATUS_ICON_MAP = {
@@ -205,7 +210,7 @@ export function DetailModal({
                     </div>
                     <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
                       <a
-                        href={`/api/preview-file/${proposal.file_proposal}`}
+                        href={buildFilePreviewUrl(proposal.file_proposal, `Proposal - ${proposal.kode_tiket}`)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -223,7 +228,7 @@ export function DetailModal({
                     </div>
                     <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
                       <a
-                        href={`/api/preview-file/${proposal.evidence_dokumen}`}
+                        href={buildFilePreviewUrl(proposal.evidence_dokumen, `LPJ Evidence - ${proposal.kode_tiket}`)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -241,7 +246,7 @@ export function DetailModal({
                     </div>
                     <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
                       <a
-                        href={`/api/preview-file/${proposal.bukti_transfer}`}
+                        href={buildFilePreviewUrl(proposal.bukti_transfer, `Bukti Pembayaran - ${proposal.kode_tiket}`)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -288,7 +293,7 @@ export function DetailModal({
                     <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                       <Button variant="outline" size="sm" asChild className="min-h-10 bg-card sm:min-h-8">
                         <a
-                          href={`/api/proposals/${proposal.id}/berita-acara/preview`}
+                          href={buildBeritaAcaraPreviewUrl(proposal.id, ba.nomor_ba)}
                           target="_blank"
                           rel="noopener noreferrer"
                         >

@@ -97,3 +97,45 @@ export const formatRupiah = (angka) => {
 export const getStatusBadgeClass = (status) => {
   return STATUS_BADGE_MAP[status] || 'bg-slate-100 text-slate-700 border-slate-200';
 };
+
+export const encodeStoragePath = (path = '') => {
+  return String(path)
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+};
+
+const toBase64Url = (str = '') => {
+  try {
+    const bytes = new TextEncoder().encode(str);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  } catch {
+    return '';
+  }
+};
+
+export const buildDocumentPreviewUrl = ({ src, title = 'Preview Dokumen', downloadUrl = '' }) => {
+  const params = new URLSearchParams();
+  params.set('d', toBase64Url(src));
+  if (title) params.set('title', title);
+  if (downloadUrl) params.set('dl', toBase64Url(downloadUrl));
+  return `/preview-dokumen?${params.toString()}`;
+};
+
+export const buildFilePreviewUrl = (storagePath, title = 'Preview Dokumen') => {
+  const src = `/api/preview-file/${encodeStoragePath(storagePath)}`;
+  return buildDocumentPreviewUrl({ src, title });
+};
+
+export const buildBeritaAcaraPreviewUrl = (proposalId, nomorBa = '') => {
+  const title = nomorBa ? `Berita Acara ${nomorBa}` : 'Berita Acara Verifikasi Proposal';
+  return buildDocumentPreviewUrl({
+    src: `/api/proposals/${proposalId}/berita-acara/preview`,
+    title,
+    downloadUrl: `/api/proposals/${proposalId}/berita-acara/download`,
+  });
+};

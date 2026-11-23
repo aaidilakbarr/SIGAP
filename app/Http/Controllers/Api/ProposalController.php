@@ -416,21 +416,52 @@ class ProposalController extends Controller
         return response()->json(['status' => 'success']);
     }
 
-    public function previewFile($path)
+    public function previewFile(Request $request, $path)
     {
-        if (!Storage::disk('public')->exists($path)) {
+        $decodedPath = ltrim(str_replace('\\', '/', rawurldecode($path)), '/');
+        if ($decodedPath === '' || str_contains($decodedPath, '..')) {
+            abort(400, 'Path file tidak valid.');
+        }
+
+        $disk = Storage::disk('public');
+        if (!$disk->exists($decodedPath)) {
             abort(404, 'File tidak ditemukan.');
         }
 
-        $file = Storage::disk('public')->get($path);
-        $mimeType = Storage::disk('public')->mimeType($path);
+        $file = $disk->get($decodedPath);
+        $extension = strtolower(pathinfo($decodedPath, PATHINFO_EXTENSION));
+        $mimeMap = [
+            'pdf'  => 'application/pdf',
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png'  => 'image/png',
+            'gif'  => 'image/gif',
+            'webp' => 'image/webp',
+            'doc'  => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+        $mimeType = $mimeMap[$extension] ?? ($disk->mimeType($decodedPath) ?: 'application/octet-stream');
 
         // Extract original filename (strip timestamp prefix if present)
-        $basename = basename($path);
+        $basename = basename($decodedPath);
         $originalName = preg_replace('/^\d+_/', '', $basename);
+        $safeFilename = preg_replace('/["\r\n]/', '', $originalName);
 
-        return response($file, 200)
-            ->header('Content-Type', $mimeType)
-            ->header('Content-Disposition', 'inline; filename="' . $originalName . '"');
+        if ($request->query('format') === 'base64') {
+            return response()->json([
+                'status' => 'success',
+                'filename' => $safeFilename,
+                'mime_type' => $mimeType,
+                'data' => base64_encode($file),
+            ]);
+        }
+
+        return response($file, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Length' => strlen($file),
+            'Accept-Ranges' => 'bytes',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, max-age=300',
+        ]);
     }
 }

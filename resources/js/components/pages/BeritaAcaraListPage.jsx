@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, Download, Eye, FileSpreadsheet, RefreshCw, RotateCcw, Search } from 'lucide-react';
+import { Calendar, Download, Eye, FileSpreadsheet, RefreshCw, RotateCcw, Search, X } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { EmptyState, Pagination, TableSkeleton } from '../shared/SharedComponents';
+import { buildBeritaAcaraPreviewUrl } from '../shared/utils';
 
 export function BeritaAcaraListPage() {
   const [beritaAcaras, setBeritaAcaras] = useState([]);
@@ -51,8 +52,13 @@ export function BeritaAcaraListPage() {
     <Card className="overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-border px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
         <div>
-          <h2 className="text-sm font-bold text-foreground sm:text-base">Daftar Berita Acara</h2>
-          <p className="text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-foreground sm:text-base">Daftar Berita Acara</h2>
+            <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800 tabular-nums">
+              {totalItems} terbit
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Dokumen PDF Berita Acara resmi yang diterbitkan untuk proposal berstatus selesai.
           </p>
         </div>
@@ -76,9 +82,19 @@ export function BeritaAcaraListPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari Nomor BA, Tiket, Kegiatan, Pemohon..."
-            className="h-11 sm:h-9 pl-9 bg-card"
+            className="h-11 sm:h-9 pl-9 pr-9 bg-card"
             aria-label="Cari berita acara"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="Hapus pencarian"
+              className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
         </div>
         {searchQuery && (
           <div className="flex items-center justify-between gap-2">
@@ -108,37 +124,50 @@ export function BeritaAcaraListPage() {
         />
       ) : (
         <>
-          {/* Mobile Cards */}
+          {/* Mobile Structured Cards */}
           <div className="divide-y divide-border md:hidden">
             {beritaAcaras.map((ba) => (
-              <div key={ba.id} className="p-4 space-y-2.5">
+              <div key={ba.id} className="p-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-mono text-xs font-bold text-foreground">{ba.nomor_ba}</span>
-                  <span className="font-mono text-xs font-semibold text-primary">
+                  <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 font-mono text-xs font-bold text-foreground">
+                    {ba.nomor_ba}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-primary/8 px-2 py-0.5 font-mono text-xs font-bold text-primary">
                     {ba.proposal?.kode_tiket || '-'}
                   </span>
                 </div>
-                <div className="text-sm font-bold text-foreground leading-snug">
+
+                <div className="text-[15px] font-bold text-foreground leading-snug">
                   {ba.proposal?.kegiatan || '-'}
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <span>
-                    <strong className="text-foreground">{ba.proposal?.user?.name || '-'}</strong>
-                    {ba.proposal?.user?.instansi ? ` · ${ba.proposal.user.instansi}` : ''}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Calendar className="size-3.5" />
-                    {new Date(ba.created_at).toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </span>
+
+                <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/45 px-3 py-2 text-xs">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Pemohon
+                    </div>
+                    <div className="mt-0.5 truncate font-semibold text-foreground">
+                      {ba.proposal?.user?.name || '-'}
+                    </div>
+                  </div>
+                  <div className="min-w-0 border-l border-border pl-2.5">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Tanggal Terbit
+                    </div>
+                    <div className="mt-0.5 truncate font-semibold text-foreground">
+                      {new Date(ba.created_at).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 pt-1">
+
+                <div className="grid grid-cols-2 gap-2 pt-0.5">
                   <Button variant="outline" size="sm" asChild className="min-h-10">
                     <a
-                      href={`/api/proposals/${ba.proposal_id}/berita-acara/preview`}
+                      href={buildBeritaAcaraPreviewUrl(ba.proposal_id, ba.nomor_ba)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -174,11 +203,15 @@ export function BeritaAcaraListPage() {
               <TableBody>
                 {beritaAcaras.map((ba) => (
                   <TableRow key={ba.id}>
-                    <TableCell className="font-mono text-xs font-semibold text-foreground">
-                      {ba.nomor_ba}
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 font-mono text-xs font-bold text-foreground">
+                        {ba.nomor_ba}
+                      </span>
                     </TableCell>
-                    <TableCell className="font-mono text-xs font-semibold text-primary">
-                      {ba.proposal?.kode_tiket || '-'}
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-md bg-primary/8 px-2 py-0.5 font-mono text-xs font-bold text-primary">
+                        {ba.proposal?.kode_tiket || '-'}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="font-semibold text-foreground">
@@ -190,7 +223,7 @@ export function BeritaAcaraListPage() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="max-w-[220px] truncate" title={ba.proposal?.kegiatan}>
+                    <TableCell className="max-w-[220px] truncate font-medium" title={ba.proposal?.kegiatan}>
                       {ba.proposal?.kegiatan || '-'}
                     </TableCell>
                     <TableCell>
@@ -200,17 +233,20 @@ export function BeritaAcaraListPage() {
                       <div className="text-xs text-muted-foreground">Admin</div>
                     </TableCell>
                     <TableCell className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                      {new Date(ba.created_at).toLocaleDateString('id-ID', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
+                      <span className="inline-flex items-center gap-1.5">
+                        <Calendar className="size-3.5" />
+                        {new Date(ba.created_at).toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
                         <Button variant="outline" size="sm" asChild>
                           <a
-                            href={`/api/proposals/${ba.proposal_id}/berita-acara/preview`}
+                            href={buildBeritaAcaraPreviewUrl(ba.proposal_id, ba.nomor_ba)}
                             target="_blank"
                             rel="noopener noreferrer"
                           >

@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { StatusBadge } from '../shared/SharedComponents';
+import { buildBeritaAcaraPreviewUrl, buildFilePreviewUrl } from '../shared/utils';
 import { Timeline } from './Timeline';
 
 export const ProposalDetail = ({
@@ -197,7 +198,7 @@ export const ProposalDetail = ({
                       </span>
                       <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
                         <a
-                          href={`/api/preview-file/${p.file_proposal}`}
+                          href={buildFilePreviewUrl(p.file_proposal, `Proposal - ${p.kode_tiket}`)}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -215,7 +216,7 @@ export const ProposalDetail = ({
                       </span>
                       <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
                         <a
-                          href={`/api/preview-file/${p.evidence_dokumen}`}
+                          href={buildFilePreviewUrl(p.evidence_dokumen, `LPJ Evidence - ${p.kode_tiket}`)}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -233,7 +234,7 @@ export const ProposalDetail = ({
                       </span>
                       <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
                         <a
-                          href={`/api/preview-file/${p.bukti_transfer}`}
+                          href={buildFilePreviewUrl(p.bukti_transfer, `Bukti Pengiriman Dana - ${p.kode_tiket}`)}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -424,7 +425,7 @@ export const ProposalDetail = ({
                     <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                       <Button variant="outline" size="sm" asChild className="min-h-10 bg-card">
                         <a
-                          href={`/api/proposals/${p.id}/berita-acara/preview`}
+                          href={buildBeritaAcaraPreviewUrl(p.id, ba.nomor_ba)}
                           target="_blank"
                           rel="noopener noreferrer"
                         >

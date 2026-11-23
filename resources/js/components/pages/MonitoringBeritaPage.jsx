@@ -4,6 +4,7 @@ import {
   Calendar,
   ExternalLink,
   Info,
+  MinusCircle,
   Newspaper,
   Pencil,
   Plus,
@@ -11,7 +12,6 @@ import {
   Search,
   ThumbsUp,
   Trash2,
-  MinusCircle,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,6 +54,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
 import { EmptyState } from '../shared/SharedComponents';
 
 const STORAGE_KEY = 'sigap_monitoring_berita_items';
@@ -118,11 +119,18 @@ export function MonitoringBeritaPage({ showToast }) {
   }, [items, searchQuery, sentimentFilter, dateFrom, dateTo]);
 
   const stats = useMemo(() => {
+    const total = items.length;
+    const positif = items.filter((i) => i.sentimen === 'Positif').length;
+    const netral = items.filter((i) => i.sentimen === 'Netral').length;
+    const perhatian = items.filter((i) => i.sentimen === 'Perlu Perhatian').length;
     return {
-      total: items.length,
-      positif: items.filter((i) => i.sentimen === 'Positif').length,
-      netral: items.filter((i) => i.sentimen === 'Netral').length,
-      perhatian: items.filter((i) => i.sentimen === 'Perlu Perhatian').length,
+      total,
+      positif,
+      netral,
+      perhatian,
+      positifPct: total > 0 ? Math.round((positif / total) * 100) : 0,
+      netralPct: total > 0 ? Math.round((netral / total) * 100) : 0,
+      perhatianPct: total > 0 ? Math.round((perhatian / total) * 100) : 0,
     };
   }, [items]);
 
@@ -209,71 +217,137 @@ export function MonitoringBeritaPage({ showToast }) {
         </AlertDescription>
       </Alert>
 
-      {/* Summary Cards: 2x2 on mobile */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center justify-between gap-2 p-3.5 sm:p-4">
-            <div className="min-w-0">
-              <div className="truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-                Total Berita
+      {/* Varied Asymmetric KPI Cards (5 + 3 + 2 + 2 on lg, 2-col lead + 1+1 + 2-col on mobile) */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-12">
+        {/* Lead Card: Total Berita + Real Sentiment Distribution Bar */}
+        <Card className="col-span-2 lg:col-span-5">
+          <CardContent className="flex h-full flex-col justify-between p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                  <Newspaper className="size-3.5 text-primary" />
+                  Total Publikasi Berita
+                </span>
+                <div className="mt-1.5 flex items-baseline gap-2">
+                  <span className="text-3xl font-extrabold text-foreground tabular-nums">
+                    {stats.total}
+                  </span>
+                  <span className="text-xs text-muted-foreground">liputan tercatat</span>
+                </div>
               </div>
-              <div className="mt-1 text-2xl font-extrabold text-foreground tabular-nums">
-                {stats.total}
-              </div>
+              <Button size="sm" variant="secondary" className="h-8 px-2.5 text-xs" onClick={openCreateModal}>
+                <Plus className="size-3.5" />
+                Catat
+              </Button>
             </div>
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary sm:size-10">
-              <Newspaper className="size-4.5 sm:size-5" />
+
+            <div className="mt-4 space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+                <span>Komposisi sentimen</span>
+                <span className="tabular-nums">
+                  {stats.total > 0 ? `${stats.positifPct}% positif` : 'Belum ada data'}
+                </span>
+              </div>
+              <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+                {stats.positifPct > 0 && (
+                  <div className="bg-emerald-600 transition-all" style={{ width: `${stats.positifPct}%` }} />
+                )}
+                {stats.netralPct > 0 && (
+                  <div className="bg-slate-400 transition-all" style={{ width: `${stats.netralPct}%` }} />
+                )}
+                {stats.perhatianPct > 0 && (
+                  <div className="bg-amber-500 transition-all" style={{ width: `${stats.perhatianPct}%` }} />
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center justify-between gap-2 p-3.5 sm:p-4">
-            <div className="min-w-0">
-              <div className="truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-                Positif
-              </div>
-              <div className="mt-1 text-2xl font-extrabold text-emerald-700 tabular-nums">
-                {stats.positif}
-              </div>
+        {/* Interactive Positif Card */}
+        <button
+          type="button"
+          onClick={() => setSentimentFilter(sentimentFilter === 'Positif' ? '' : 'Positif')}
+          className={cn(
+            'col-span-1 lg:col-span-3 text-left rounded-xl border border-emerald-200/85 bg-emerald-50/55 p-4 sm:p-5 shadow-xs transition-all hover:border-emerald-300 hover:bg-emerald-50 cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            sentimentFilter === 'Positif' && 'ring-2 ring-emerald-600/35'
+          )}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-xs font-semibold text-emerald-950">Positif</span>
+            <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+              <ThumbsUp className="size-4" />
             </div>
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 sm:size-10">
-              <ThumbsUp className="size-4.5 sm:size-5" />
+          </div>
+          <div className="mt-3">
+            <div className="text-2xl font-extrabold text-emerald-800 tabular-nums sm:text-3xl">
+              {stats.positif}
             </div>
-          </CardContent>
-        </Card>
+            <div className="mt-1 text-[11px] font-medium text-emerald-900/75">
+              Klik untuk filter
+            </div>
+          </div>
+        </button>
 
-        <Card>
-          <CardContent className="flex items-center justify-between gap-2 p-3.5 sm:p-4">
-            <div className="min-w-0">
-              <div className="truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-                Netral
-              </div>
-              <div className="mt-1 text-2xl font-extrabold text-slate-700 tabular-nums">
-                {stats.netral}
-              </div>
+        {/* Interactive Netral Card */}
+        <button
+          type="button"
+          onClick={() => setSentimentFilter(sentimentFilter === 'Netral' ? '' : 'Netral')}
+          className={cn(
+            'col-span-1 lg:col-span-2 text-left rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-slate-300 hover:bg-muted/30 cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            sentimentFilter === 'Netral' && 'ring-2 ring-slate-500/30'
+          )}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-700">Netral</span>
+            <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+              <MinusCircle className="size-4" />
             </div>
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 sm:size-10">
-              <MinusCircle className="size-4.5 sm:size-5" />
+          </div>
+          <div className="mt-3">
+            <div className="text-2xl font-extrabold text-slate-800 tabular-nums sm:text-3xl">
+              {stats.netral}
             </div>
-          </CardContent>
-        </Card>
+            <div className="mt-1 text-[11px] text-muted-foreground">Informatif</div>
+          </div>
+        </button>
 
-        <Card>
-          <CardContent className="flex items-center justify-between gap-2 p-3.5 sm:p-4">
-            <div className="min-w-0">
-              <div className="truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-                Perhatian
-              </div>
-              <div className="mt-1 text-2xl font-extrabold text-amber-700 tabular-nums">
-                {stats.perhatian}
-              </div>
+        {/* Interactive Perlu Perhatian Card */}
+        <button
+          type="button"
+          onClick={() =>
+            setSentimentFilter(sentimentFilter === 'Perlu Perhatian' ? '' : 'Perlu Perhatian')
+          }
+          className={cn(
+            'col-span-2 lg:col-span-2 text-left rounded-xl border p-4 sm:p-5 shadow-xs transition-all cursor-pointer flex flex-row items-center justify-between lg:flex-col lg:items-stretch focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            stats.perhatian > 0
+              ? 'border-amber-200 bg-amber-50/75 hover:border-amber-300'
+              : 'border-border bg-card hover:border-primary/35',
+            sentimentFilter === 'Perlu Perhatian' && 'ring-2 ring-amber-500/40'
+          )}
+        >
+          <div className="flex items-center gap-2 lg:justify-between">
+            <span className="text-xs font-semibold text-amber-950">Perhatian</span>
+            <div
+              className={cn(
+                'flex size-8 items-center justify-center rounded-lg',
+                stats.perhatian > 0 ? 'bg-amber-100 text-amber-800' : 'bg-muted text-muted-foreground'
+              )}
+            >
+              <AlertTriangle className="size-4" />
             </div>
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 sm:size-10">
-              <AlertTriangle className="size-4.5 sm:size-5" />
+          </div>
+          <div className="text-right lg:mt-3 lg:text-left">
+            <div
+              className={cn(
+                'text-2xl font-extrabold tabular-nums sm:text-3xl',
+                stats.perhatian > 0 ? 'text-amber-800' : 'text-foreground'
+              )}
+            >
+              {stats.perhatian}
             </div>
-          </CardContent>
-        </Card>
+            <div className="mt-0.5 text-[11px] text-amber-900/75 lg:mt-1">Tindak lanjut</div>
+          </div>
+        </button>
       </div>
 
       {/* Table Card */}
@@ -398,10 +472,10 @@ export function MonitoringBeritaPage({ showToast }) {
           />
         ) : (
           <>
-            {/* Mobile Cards */}
+            {/* Mobile Structured Cards */}
             <div className="divide-y divide-border md:hidden">
               {filteredItems.map((item) => (
-                <div key={item.id} className="p-4 space-y-2.5">
+                <div key={item.id} className="p-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground tabular-nums">
                       <Calendar className="size-3.5" />
@@ -414,12 +488,24 @@ export function MonitoringBeritaPage({ showToast }) {
                       {item.sentimen}
                     </Badge>
                   </div>
-                  <div className="text-sm font-bold text-foreground leading-snug">{item.judul}</div>
-                  <div className="text-xs font-semibold text-primary">{item.media}</div>
-                  {item.ringkasan && (
-                    <p className="text-xs text-muted-foreground leading-relaxed">{item.ringkasan}</p>
-                  )}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
+
+                  <div className="text-[15px] font-bold text-foreground leading-snug">
+                    {item.judul}
+                  </div>
+
+                  <div className="rounded-lg bg-muted/45 px-3 py-2 text-xs">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Sumber Media
+                    </div>
+                    <div className="mt-0.5 font-semibold text-primary">{item.media}</div>
+                    {item.ringkasan && (
+                      <p className="mt-1.5 text-muted-foreground leading-relaxed">
+                        {item.ringkasan}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
                     {item.url && (
                       <Button variant="outline" size="sm" asChild className="flex-1 min-h-10">
                         <a href={item.url} target="_blank" rel="noopener noreferrer">
@@ -471,14 +557,16 @@ export function MonitoringBeritaPage({ showToast }) {
                         {item.tanggal}
                       </TableCell>
                       <TableCell className="max-w-sm">
-                        <div className="font-semibold text-foreground leading-snug">{item.judul}</div>
+                        <div className="font-semibold text-foreground leading-snug">
+                          {item.judul}
+                        </div>
                         {item.ringkasan && (
                           <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                             {item.ringkasan}
                           </p>
                         )}
                       </TableCell>
-                      <TableCell className="font-medium text-foreground whitespace-nowrap">
+                      <TableCell className="font-semibold text-foreground whitespace-nowrap">
                         {item.media}
                       </TableCell>
                       <TableCell>

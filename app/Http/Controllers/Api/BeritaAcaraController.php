@@ -163,7 +163,7 @@ class BeritaAcaraController extends Controller
         ]);
     }
 
-    public function preview($proposalId)
+    public function preview(Request $request, $proposalId)
     {
         $proposal = Proposal::findOrFail($proposalId);
         $beritaAcara = $proposal->beritaAcara;
@@ -172,16 +172,30 @@ class BeritaAcaraController extends Controller
             abort(404, 'Berita Acara belum dibuat untuk proposal ini.');
         }
 
-        if (!Storage::disk('public')->exists($beritaAcara->file_path)) {
+        $disk = Storage::disk('public');
+        if (!$disk->exists($beritaAcara->file_path)) {
             abort(404, 'File PDF tidak ditemukan di server.');
         }
 
-        $file = Storage::disk('public')->get($beritaAcara->file_path);
-        $mimeType = Storage::disk('public')->mimeType($beritaAcara->file_path);
+        $file = $disk->get($beritaAcara->file_path);
+        $filename = preg_replace('/["\r\n]/', '', basename($beritaAcara->file_path));
 
-        return response($file, 200)
-            ->header('Content-Type', $mimeType)
-            ->header('Content-Disposition', 'inline; filename="' . basename($beritaAcara->file_path) . '"');
+        if ($request->query('format') === 'base64') {
+            return response()->json([
+                'status' => 'success',
+                'filename' => $filename,
+                'mime_type' => 'application/pdf',
+                'data' => base64_encode($file),
+            ]);
+        }
+
+        return response($file, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Length' => strlen($file),
+            'Accept-Ranges' => 'bytes',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, max-age=300',
+        ]);
     }
 
     public function download($proposalId)

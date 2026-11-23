@@ -10,12 +10,13 @@ import {
   LayoutDashboard,
   Loader2,
   LogOut,
-  Menu,
   Newspaper,
+  PanelLeft,
   Plus,
   ShieldCheck,
   UserCheck,
   Users,
+  X,
 } from 'lucide-react';
 import webIcon from './assets/icon-web.svg';
 import bannerLogo from './assets/banner.svg';
@@ -60,6 +61,7 @@ function SidebarNav({
   role,
   handleLogout,
   onNavigate,
+  onCloseMobile,
   collapsed = false,
 }) {
   const go = (page) => {
@@ -95,23 +97,41 @@ function SidebarNav({
   return (
     <div className="flex h-full flex-col overflow-hidden bg-sidebar text-sidebar-foreground">
       {/* Brand header with smooth logo crossfade */}
-      <div className="relative flex h-16 shrink-0 items-center justify-center overflow-hidden border-b border-sidebar-border bg-white px-4">
+      <div
+        className={cn(
+          'relative flex h-16 shrink-0 items-center overflow-hidden border-b border-sidebar-border bg-white px-4',
+          onCloseMobile ? 'justify-between gap-2' : 'justify-center'
+        )}
+      >
         <img
           src={bannerLogo}
           alt="SIGAP"
           className={cn(
-            'h-auto w-full max-w-[188px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+            'h-auto w-full transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+            onCloseMobile ? 'max-w-[164px]' : 'max-w-[188px]',
             collapsed ? 'pointer-events-none scale-90 opacity-0' : 'scale-100 opacity-100'
           )}
         />
-        <img
-          src={webIcon}
-          alt="SIGAP"
-          className={cn(
-            'absolute h-9 w-9 object-contain transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
-            collapsed ? 'scale-100 opacity-100' : 'pointer-events-none scale-75 opacity-0'
-          )}
-        />
+        {!onCloseMobile && (
+          <img
+            src={webIcon}
+            alt="SIGAP"
+            className={cn(
+              'absolute h-9 w-9 object-contain transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+              collapsed ? 'scale-100 opacity-100' : 'pointer-events-none scale-75 opacity-0'
+            )}
+          />
+        )}
+        {onCloseMobile && (
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            aria-label="Tutup sidebar"
+            className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/60 text-foreground transition-colors hover:bg-muted active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+          >
+            <X className="size-4.5" />
+          </button>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label="Navigasi utama">
@@ -617,7 +637,11 @@ export default function App() {
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="p-0 border-0 bg-sidebar text-white">
+        <SheetContent
+          side="left"
+          showClose={false}
+          className="w-[272px] max-w-[82vw] p-0 border-0 bg-sidebar text-white"
+        >
           <SheetTitle>Menu Navigasi SIGAP</SheetTitle>
           <SheetDescription>Pilih halaman yang ingin Anda buka.</SheetDescription>
           <SidebarNav
@@ -631,8 +655,18 @@ export default function App() {
             role={role}
             handleLogout={handleLogout}
             onNavigate={() => setSidebarOpen(false)}
+            onCloseMobile={() => setSidebarOpen(false)}
             collapsed={false}
           />
+          {/* Mid-edge collapse handle matching desktop */}
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Ciutkan sidebar"
+            className="absolute top-1/2 -right-4 z-50 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-transform duration-200 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
         </SheetContent>
       </Sheet>
 
@@ -647,11 +681,11 @@ export default function App() {
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Button
               variant="outline"
-              className="h-11 shrink-0 gap-1.5 px-2.5 lg:hidden"
+              className="h-11 shrink-0 gap-1.5 px-3 text-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary active:scale-95 transition-all lg:hidden"
               onClick={() => setSidebarOpen(true)}
               aria-label="Buka menu navigasi"
             >
-              <Menu className="size-5" />
+              <PanelLeft className="size-4.5" />
               <span className="text-xs font-semibold">Menu</span>
             </Button>
             <div className="min-w-0">
@@ -702,6 +736,7 @@ export default function App() {
         >
           {activePage === 'dashboard' && (
             <DashboardPage
+              activeRole={activeRole}
               dashboardStats={dashboardStats}
               proposals={proposals}
               loading={proposalsLoading}
