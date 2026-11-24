@@ -3,6 +3,8 @@ import axios from 'axios';
 import {
   AlertTriangle,
   Banknote,
+  Building2,
+  Calendar,
   Check,
   CheckCircle2,
   Clock,
@@ -15,10 +17,14 @@ import {
   FileUp,
   Landmark,
   Loader2,
+  MessageSquare,
   PackageCheck,
+  Phone,
   Search,
+  SlidersHorizontal,
   Trash2,
   Upload,
+  User,
   XCircle,
 } from 'lucide-react';
 import {
@@ -59,6 +65,7 @@ export function DetailModal({
   proposal,
   activeRole,
   onClose,
+  onOpenStatusModal,
   onRequestDeleteComment,
   showToast,
   setSelectedProposal,
@@ -71,6 +78,36 @@ export function DetailModal({
 
   const ba = proposal.berita_acara || proposal.beritaAcara;
   const isAdmin = ['master', 'reviewer', 'admin', 'superadmin'].includes(activeRole);
+  const hasBankInfo = Boolean(
+    proposal.nama_bank || proposal.nomor_rekening || proposal.atas_nama
+  );
+
+  const attachedDocs = [
+    proposal.file_proposal && {
+      key: 'proposal',
+      label: 'File Proposal',
+      sub: 'Dokumen pengajuan utama',
+      href: buildFilePreviewUrl(proposal.file_proposal, `Proposal - ${proposal.kode_tiket}`),
+      iconBox: 'bg-emerald-100 text-emerald-800',
+      borderHover: 'hover:border-emerald-300',
+    },
+    proposal.evidence_dokumen && {
+      key: 'evidence',
+      label: 'File LPJ / Evidence',
+      sub: 'Laporan pertanggungjawaban',
+      href: buildFilePreviewUrl(proposal.evidence_dokumen, `LPJ Evidence - ${proposal.kode_tiket}`),
+      iconBox: 'bg-amber-100 text-amber-800',
+      borderHover: 'hover:border-amber-300',
+    },
+    proposal.bukti_transfer && {
+      key: 'transfer',
+      label: 'Bukti Pembayaran',
+      sub: 'Bukti pencairan dana',
+      href: buildFilePreviewUrl(proposal.bukti_transfer, `Bukti Pembayaran - ${proposal.kode_tiket}`),
+      iconBox: 'bg-sky-100 text-sky-800',
+      borderHover: 'hover:border-sky-300',
+    },
+  ].filter(Boolean);
 
   const handleGenerateBA = async () => {
     try {
@@ -99,168 +136,197 @@ export function DetailModal({
 
   return (
     <Dialog open={Boolean(proposal)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Detail Proposal</DialogTitle>
-          <DialogDescription className="font-mono text-xs">
-            {proposal.kode_tiket}
+      <DialogContent className="max-w-3xl">
+        {/* Executive Document Header */}
+        <DialogHeader className="bg-muted/25 gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-0.5 font-mono text-xs font-bold text-primary">
+              {proposal.kode_tiket}
+            </span>
+            <StatusBadge status={proposal.status} />
+            <Badge variant="secondary">{proposal.jenis}</Badge>
+          </div>
+          <DialogTitle className="text-base sm:text-lg font-extrabold leading-snug text-foreground">
+            {proposal.kegiatan}
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            Ringkasan informasi pemohon, nominal anggaran, lampiran dokumen, dan riwayat catatan.
           </DialogDescription>
         </DialogHeader>
 
         <div className="overflow-y-auto px-4 py-4 space-y-5 sm:px-6 sm:py-5">
+          {/* Deadline Warning (only when active) */}
           {proposal.revisi_deadline && (
             <Alert variant="destructive">
               <AlertTriangle className="size-4 shrink-0 mt-0.5" />
               <div>
                 <AlertTitle>Batas Pengerjaan Revisi</AlertTitle>
                 <AlertDescription>
-                  {new Date(proposal.revisi_deadline).toLocaleString('id-ID')}
+                  Tenggat penyelesaian:{' '}
+                  <strong>{new Date(proposal.revisi_deadline).toLocaleString('id-ID')}</strong>
                 </AlertDescription>
               </div>
             </Alert>
           )}
 
-          {/* Core metadata grid */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <div className="text-xs font-medium text-muted-foreground">Kode Tiket</div>
-              <div className="mt-1 font-mono text-sm font-semibold text-foreground">
-                {proposal.kode_tiket}
+          {/* Zone 1: Financial & Transfer Hero Strip */}
+          <div className="grid grid-cols-1 gap-4 rounded-xl border border-primary/20 bg-primary/[0.04] p-4 sm:grid-cols-12 sm:items-center">
+            <div className="sm:col-span-5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                <Banknote className="size-3.5 text-primary" />
+                Dana Diajukan
+              </div>
+              <div className="mt-1 text-2xl font-extrabold tracking-tight text-primary tabular-nums">
+                Rp {formatRupiah(proposal.dana_diajukan)}
               </div>
             </div>
-            <div>
-              <div className="text-xs font-medium text-muted-foreground">Status Saat Ini</div>
-              <div className="mt-1">
-                <StatusBadge status={proposal.status} />
+
+            <div className="border-t border-primary/15 pt-3 sm:col-span-7 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                <Landmark className="size-3.5 text-primary" />
+                Rekening Tujuan Pencairan
               </div>
-            </div>
-            <div>
-              <div className="text-xs font-medium text-muted-foreground">Pemohon</div>
-              <div className="mt-1 text-sm font-semibold text-foreground">
-                {proposal.user?.name || '-'}
-              </div>
-              {proposal.user?.instansi && (
-                <div className="text-xs text-muted-foreground">{proposal.user.instansi}</div>
-              )}
-            </div>
-            <div>
-              <div className="text-xs font-medium text-muted-foreground">Nomor Telepon</div>
-              <div className="mt-1 text-sm font-medium text-foreground">
-                {proposal.user?.nomor_telepon || '-'}
-              </div>
-            </div>
-            <div className="sm:col-span-2">
-              <div className="text-xs font-medium text-muted-foreground">Nama Kegiatan</div>
-              <div className="mt-1 text-sm font-semibold text-foreground leading-snug">
-                {proposal.kegiatan}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs font-medium text-muted-foreground">Tanggal Pelaksanaan</div>
-              <div className="mt-1 text-sm font-medium text-foreground">
-                {proposal.tgl_pelaksanaan || '-'}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs font-medium text-muted-foreground">Skema Pencairan</div>
-              <div className="mt-1">
-                <Badge variant="secondary">{proposal.jenis}</Badge>
-              </div>
-            </div>
-            <div className="sm:col-span-2 rounded-lg border border-border bg-muted/40 p-3.5 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <div className="text-xs font-medium text-muted-foreground">Dana Diajukan</div>
-                <div className="mt-0.5 text-lg font-extrabold text-primary tabular-nums">
-                  Rp {formatRupiah(proposal.dana_diajukan)}
-                </div>
-              </div>
-              {(proposal.nama_bank || proposal.nomor_rekening || proposal.atas_nama) && (
-                <div className="flex items-start gap-2.5 text-left sm:text-right">
-                  <Landmark className="size-4 text-muted-foreground shrink-0 mt-0.5 sm:hidden" />
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground">
-                      Rekening Tujuan
-                    </div>
-                    <div className="text-sm font-semibold text-foreground">
-                      {proposal.nama_bank || '-'}, {proposal.nomor_rekening || '-'}
-                      {proposal.atas_nama ? ` (a.n. ${proposal.atas_nama})` : ''}
-                    </div>
+              {hasBankInfo ? (
+                <div className="mt-1 space-y-0.5">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm font-bold text-foreground">
+                    <span>{proposal.nama_bank || '-'}</span>
+                    <span className="font-mono text-primary">
+                      {proposal.nomor_rekening || '-'}
+                    </span>
                   </div>
+                  {proposal.atas_nama && (
+                    <div className="text-xs text-muted-foreground">
+                      a.n. <strong className="font-semibold text-foreground">{proposal.atas_nama}</strong>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <p className="mt-1 text-xs italic text-muted-foreground">
+                  Pemohon belum mencantumkan informasi rekening.
+                </p>
               )}
             </div>
           </div>
 
-          <Separator />
+          {/* Zone 2: Structured Applicant & Schedule Info Card */}
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
+              <div className="p-3.5 sm:p-4">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <User className="size-3.5" />
+                  Pemohon
+                </div>
+                <div className="mt-1.5 text-sm font-bold text-foreground">
+                  {proposal.user?.name || '-'}
+                </div>
+                {proposal.user?.instansi && (
+                  <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                    <Building2 className="size-3 shrink-0" />
+                    <span className="truncate">{proposal.user.instansi}</span>
+                  </div>
+                )}
+              </div>
 
-          {/* Attached Documents */}
-          <div className="space-y-2.5">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Dokumen Terlampir
-            </h4>
-            {!proposal.file_proposal && !proposal.evidence_dokumen && !proposal.bukti_transfer ? (
-              <p className="text-xs text-muted-foreground italic">Belum ada dokumen terlampir.</p>
-            ) : (
-              <div className="grid gap-2.5">
-                {proposal.file_proposal && (
-                  <div className="flex flex-col items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-                    <div className="flex items-center gap-2.5 text-sm font-semibold text-emerald-900">
-                      <FileText className="size-4 shrink-0 text-emerald-700" />
-                      File Proposal
-                    </div>
-                    <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
-                      <a
-                        href={buildFilePreviewUrl(proposal.file_proposal, `Proposal - ${proposal.kode_tiket}`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Lihat File
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    </Button>
-                  </div>
-                )}
-                {proposal.evidence_dokumen && (
-                  <div className="flex flex-col items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-                    <div className="flex items-center gap-2.5 text-sm font-semibold text-amber-950">
-                      <FileText className="size-4 shrink-0 text-amber-700" />
-                      File LPJ / Evidence
-                    </div>
-                    <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
-                      <a
-                        href={buildFilePreviewUrl(proposal.evidence_dokumen, `LPJ Evidence - ${proposal.kode_tiket}`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Lihat File
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    </Button>
-                  </div>
-                )}
-                {proposal.bukti_transfer && (
-                  <div className="flex flex-col items-start gap-2.5 rounded-lg border border-sky-200 bg-sky-50/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-                    <div className="flex items-center gap-2.5 text-sm font-semibold text-sky-950">
-                      <FileText className="size-4 shrink-0 text-sky-700" />
-                      Bukti Pembayaran
-                    </div>
-                    <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
-                      <a
-                        href={buildFilePreviewUrl(proposal.bukti_transfer, `Bukti Pembayaran - ${proposal.kode_tiket}`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Lihat File
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    </Button>
-                  </div>
-                )}
+              <div className="p-3.5 sm:p-4">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <Phone className="size-3.5" />
+                  Nomor Telepon
+                </div>
+                <div className="mt-1.5 font-mono text-sm font-semibold text-foreground">
+                  {proposal.user?.nomor_telepon || '-'}
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">Kontak aktif pemohon</div>
+              </div>
+
+              <div className="p-3.5 sm:p-4">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <Calendar className="size-3.5" />
+                  Rencana Pelaksanaan
+                </div>
+                <div className="mt-1.5 text-sm font-bold text-foreground">
+                  {proposal.tgl_pelaksanaan || '-'}
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">Skema {proposal.jenis}</div>
+              </div>
+            </div>
+
+            {proposal.catatan && (
+              <div className="border-t border-border bg-muted/30 px-4 py-3">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Catatan Pemohon
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-xs text-foreground/90 leading-relaxed">
+                  {proposal.catatan}
+                </p>
               </div>
             )}
           </div>
 
-          {/* Berita Acara Section */}
+          {/* Zone 3: Attached Documents Grid */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Dokumen Terlampir
+              </h4>
+              <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground tabular-nums">
+                {attachedDocs.length} berkas
+              </span>
+            </div>
+
+            {attachedDocs.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-5 text-center text-xs text-muted-foreground">
+                Belum ada dokumen yang diunggah pada proposal ini.
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  'grid grid-cols-1 gap-2.5',
+                  attachedDocs.length === 2 && 'sm:grid-cols-2',
+                  attachedDocs.length >= 3 && 'sm:grid-cols-3'
+                )}
+              >
+                {attachedDocs.map((doc) => (
+                  <div
+                    key={doc.key}
+                    className={cn(
+                      'flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors',
+                      doc.borderHover
+                    )}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div
+                        className={cn(
+                          'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                          doc.iconBox
+                        )}
+                      >
+                        <FileText className="size-4.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-foreground leading-snug">
+                          {doc.label}
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-muted-foreground">{doc.sub}</div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="w-full min-h-10 sm:min-h-8"
+                    >
+                      <a href={doc.href} target="_blank" rel="noopener noreferrer">
+                        Buka Preview
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Zone 4: Berita Acara Section (when Selesai) */}
           {proposal.status === 'Selesai' && (
             <>
               <Separator />
@@ -270,20 +336,22 @@ export function DetailModal({
                 </h4>
 
                 {ba ? (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/55 p-4 space-y-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-bold text-emerald-900 font-mono">
+                        <span className="inline-flex items-center rounded-md bg-white px-2.5 py-0.5 font-mono text-xs font-bold text-emerald-900 border border-emerald-200">
                           {ba.nomor_ba}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
+                        </span>
+                        <div className="text-xs text-muted-foreground mt-1.5">
                           Diterbitkan oleh:{' '}
-                          {ba.generated_by?.name ||
-                            ba.generated_by_user?.name ||
-                            (typeof ba.generated_by === 'object' ? ba.generated_by?.name : 'Admin')}
+                          <strong className="font-semibold text-foreground">
+                            {ba.generated_by?.name ||
+                              ba.generated_by_user?.name ||
+                              (typeof ba.generated_by === 'object' ? ba.generated_by?.name : 'Admin')}
+                          </strong>
                         </div>
                       </div>
-                      <Badge className="bg-emerald-700 text-white">Terbit</Badge>
+                      <Badge className="bg-[#1a5e1f] text-white">Terbit</Badge>
                     </div>
                     {ba.catatan_admin && (
                       <div className="rounded-lg border border-emerald-200/80 bg-card px-3 py-2.5 text-xs text-foreground italic">
@@ -310,9 +378,9 @@ export function DetailModal({
                     </div>
                   </div>
                 ) : isAdmin ? (
-                  <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-3">
+                  <div className="rounded-xl border border-border bg-muted/35 p-4 space-y-3">
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Dokumen Berita Acara belum dibuat. Anda dapat menerbitkan dokumen resmi secara otomatis untuk proposal ini.
+                      Dokumen Berita Acara belum diterbitkan. Anda dapat membuat berkas PDF resmi untuk proposal ini sekarang.
                     </p>
                     <div className="space-y-1.5">
                       <Label htmlFor="catatan-ba" className="text-xs">
@@ -327,7 +395,7 @@ export function DetailModal({
                       />
                     </div>
                     <Button
-                      className="w-full"
+                      className="w-full min-h-10"
                       disabled={generating}
                       onClick={handleGenerateBA}
                     >
@@ -353,22 +421,28 @@ export function DetailModal({
             </>
           )}
 
-          {/* Admin Notes */}
+          {/* Zone 5: Admin Comments History */}
           {proposal.comments && proposal.comments.length > 0 && (
             <>
               <Separator />
-              <div className="space-y-2.5">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800">
-                  Catatan dari Admin
-                </h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-800">
+                    <MessageSquare className="size-3.5" />
+                    Riwayat Catatan Admin
+                  </h4>
+                  <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-900 tabular-nums">
+                    {proposal.comments.length} catatan
+                  </span>
+                </div>
                 <div className="space-y-2">
                   {proposal.comments.map((c) => (
                     <div
                       key={c.id}
-                      className="rounded-lg border border-amber-200 bg-amber-50/70 p-3.5 text-sm text-amber-950"
+                      className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 text-sm text-amber-950"
                     >
                       <div className="mb-1.5 flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-amber-800">
+                        <span className="text-xs font-semibold text-amber-800 tabular-nums">
                           {new Date(c.created_at).toLocaleString('id-ID')}
                         </span>
                         {(activeRole === 'master' || activeRole === 'reviewer') && (
@@ -392,10 +466,28 @@ export function DetailModal({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" className="w-full min-h-11 sm:w-auto sm:min-h-9" onClick={onClose}>
-            Tutup
-          </Button>
+        <DialogFooter className="sm:items-center sm:justify-between">
+          <div className="hidden text-xs text-muted-foreground sm:block">
+            Kode Tiket: <span className="font-mono font-semibold text-foreground">{proposal.kode_tiket}</span>
+          </div>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+            <Button
+              variant="outline"
+              className="w-full min-h-11 sm:w-auto sm:min-h-9"
+              onClick={onClose}
+            >
+              Tutup
+            </Button>
+            {isAdmin && onOpenStatusModal && (
+              <Button
+                className="w-full min-h-11 sm:w-auto sm:min-h-9"
+                onClick={onOpenStatusModal}
+              >
+                <SlidersHorizontal className="size-4" />
+                Ubah Status
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

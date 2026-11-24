@@ -846,6 +846,7 @@ export default function App() {
           proposal={selectedProposal}
           activeRole={activeRole}
           onClose={() => setActiveModal(null)}
+          onOpenStatusModal={() => setActiveModal('decision')}
           onRequestDeleteComment={(id) => setPendingDeleteCommentId(id)}
           showToast={showToast}
           setSelectedProposal={setSelectedProposal}
