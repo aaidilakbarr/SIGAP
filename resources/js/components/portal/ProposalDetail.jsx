@@ -1,303 +1,489 @@
 import React from 'react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Download,
+  ExternalLink,
+  Eye,
+  FileText,
+  Landmark,
+  Loader2,
+  MessageSquare,
+  Paperclip,
+  Upload,
+  X,
+  XCircle,
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { StatusBadge } from '../shared/SharedComponents';
+import { buildBeritaAcaraPreviewUrl, buildFilePreviewUrl } from '../shared/utils';
+import { Timeline } from './Timeline';
 
 export const ProposalDetail = ({
-  selectedProposal, setSelectedProposal,
-  setPortalTab, selectedUploadFile,
-  handleFileChange, removeSelectedFile,
-  handleUploadProposal, handleUploadEvidence,
-  getStatusClass, formatRupiah
+  selectedProposal,
+  setSelectedProposal,
+  setPortalTab,
+  selectedUploadFile,
+  submitting,
+  handleFileChange,
+  removeSelectedFile,
+  handleUploadProposal,
+  handleUploadEvidence,
+  formatRupiah,
 }) => {
   if (!selectedProposal) return null;
   const p = selectedProposal;
+  const ba = p.berita_acara || p.beritaAcara;
 
   return (
-    <div className="up-detail-wrapper">
-      <button
-        className="up-btn-back"
-        style={{ marginBottom: '16px' }}
-        onClick={() => { setPortalTab('home'); setSelectedProposal(null); }}
+    <div className="space-y-4">
+      <Button
+        variant="outline"
+        size="sm"
+        className="min-h-10"
+        onClick={() => {
+          setPortalTab('home');
+          setSelectedProposal(null);
+        }}
       >
-        ← Kembali
-      </button>
+        <ArrowLeft className="size-4" />
+        Kembali ke Daftar
+      </Button>
 
-      <div className="up-detail-card">
+      <Card className="overflow-hidden">
         {/* Header */}
-        <div className="up-detail-header">
-          <div className="up-detail-id">{p.kode_tiket}</div>
-          <div className="up-detail-title">{p.kegiatan}</div>
-          <div className="up-detail-sub">{p.user?.name} — {p.jenis}</div>
-          <div className="up-detail-status-row">
-            <span className={`status ${getStatusClass(p.status)}`}>{p.status}</span>
+        <div className="border-b border-border bg-muted/30 p-4 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-mono text-xs font-bold text-primary">{p.kode_tiket}</span>
+            <StatusBadge status={p.status} />
+          </div>
+          <h2 className="mt-2 text-lg font-extrabold tracking-tight text-foreground sm:text-xl">
+            {p.kegiatan}
+          </h2>
+          <div className="mt-2 flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground sm:gap-3">
+            <span className="font-medium text-foreground">{p.user?.name}</span>
+            <Badge variant="secondary">{p.jenis}</Badge>
             {p.tgl_pelaksanaan && (
-              <span className="up-detail-date">📅 {p.tgl_pelaksanaan}</span>
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="size-3.5" />
+                {p.tgl_pelaksanaan}
+              </span>
             )}
           </div>
         </div>
 
-        {/* Reminder / Deadline Notice */}
-        {p.revisi_deadline && (p.status === 'Revisi Proposal' || p.status === 'Menunggu Evidence') && (
-          <div style={{ margin: '20px 20px 20px 20px', background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#b91c1c' }}>
-            <span style={{ fontSize: '20px', lineHeight: '1' }}>⚠️</span>
-            <div>
-              <div style={{ fontSize: '13.5px', fontWeight: 700, marginBottom: '2px' }}>Pengingat Tenggat Waktu (Deadline)</div>
-              <div style={{ fontSize: '13px', opacity: 0.9 }}>Batas akhir penyelesaian: <strong>{new Date(p.revisi_deadline).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</strong></div>
-              <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Pastikan untuk melengkapi dokumen sebelum waktu habis atau proposal dapat dibatalkan otomatis.</div>
-            </div>
-          </div>
-        )}
-
-        {/* Info Grid */}
-        <div className="up-info-grid">
-          <div className="up-info-item">
-            <div className="up-info-key">Dana Diajukan</div>
-            <div className="up-info-val" style={{ color: 'var(--up-green)', fontWeight: 800 }}>
-              Rp {formatRupiah(p.dana_diajukan)}
-            </div>
-          </div>
-          <div className="up-info-item">
-            <div className="up-info-key">Jenis</div>
-            <div className="up-info-val">{p.jenis}</div>
-          </div>
-          {p.user?.instansi && (
-            <div className="up-info-item">
-              <div className="up-info-key">Instansi</div>
-              <div className="up-info-val">{p.user.instansi}</div>
-            </div>
-          )}
-          {p.user?.nomor_telepon && (
-            <div className="up-info-item">
-              <div className="up-info-key">No. Telepon</div>
-              <div className="up-info-val">{p.user.nomor_telepon}</div>
-            </div>
-          )}
-          {(p.nama_bank || p.nomor_rekening || p.atas_nama) && (
-            <div className="up-info-item" style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-              <div className="up-info-key">Informasi Rekening</div>
-              <div className="up-info-val" style={{ fontWeight: 600, color: 'var(--text)' }}>
-                {p.nama_bank || '-'} — {p.nomor_rekening || '-'} {p.atas_nama ? `a.n. ${p.atas_nama}` : ''}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Catatan Admin */}
-        {p.comments && p.comments.length > 0 && (
-          <div className="up-admin-notes">
-            <div className="up-admin-notes-title">📋 Catatan dari Admin</div>
-            {p.comments.map(c => (
-              <div key={c.id} className="up-note-item">
-                <div className="up-note-date">
-                  {new Date(c.created_at).toLocaleString('id-ID')}
+        <CardContent className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+          {/* Deadline Reminder */}
+          {p.revisi_deadline &&
+            (p.status === 'Revisi Proposal' || p.status === 'Menunggu Evidence') && (
+              <Alert variant="destructive">
+                <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                <div>
+                  <AlertTitle>Pengingat Tenggat Waktu (Deadline)</AlertTitle>
+                  <AlertDescription>
+                    Batas akhir penyelesaian:{' '}
+                    <strong>
+                      {new Date(p.revisi_deadline).toLocaleString('id-ID', {
+                        dateStyle: 'full',
+                        timeStyle: 'short',
+                      })}
+                    </strong>
+                    . Lengkapi dokumen sebelum batas waktu berakhir agar pengajuan tetap diproses.
+                  </AlertDescription>
                 </div>
-                {c.komentar}
-              </div>
-            ))}
-          </div>
-        )}
+              </Alert>
+            )}
 
-        {/* Dokumen Terlampir */}
-        {(p.file_proposal || p.evidence_dokumen || p.bukti_transfer) && (
-          <div className="up-docs-section">
-            <div className="up-docs-title">Dokumen Terlampir</div>
-            {p.file_proposal && (
-              <div className="up-doc-item" style={{ background: '#f0fdf4', borderColor: '#d1fae5' }}>
-                <div className="up-doc-item-label" style={{ color: '#065f46' }}>📄 File Proposal</div>
-                <a href={`/api/preview-file/${p.file_proposal}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
-                  Lihat →
-                </a>
+          {/* Info Grid */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-border bg-muted/30 p-3.5">
+              <div className="text-xs font-medium text-muted-foreground">Dana Diajukan</div>
+              <div className="mt-1 text-lg font-extrabold text-primary tabular-nums">
+                Rp {formatRupiah(p.dana_diajukan)}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/30 p-3.5">
+              <div className="text-xs font-medium text-muted-foreground">Skema Pencairan</div>
+              <div className="mt-1 text-sm font-bold text-foreground">{p.jenis}</div>
+            </div>
+            {p.user?.instansi && (
+              <div>
+                <div className="text-xs font-medium text-muted-foreground">Instansi</div>
+                <div className="mt-0.5 text-sm font-semibold text-foreground">
+                  {p.user.instansi}
+                </div>
               </div>
             )}
-            {p.evidence_dokumen && (
-              <div className="up-doc-item" style={{ background: '#fffbeb', borderColor: '#fef3c7' }}>
-                <div className="up-doc-item-label" style={{ color: '#92400e' }}>📋 File LPJ / Evidence</div>
-                <a href={`/api/preview-file/${p.evidence_dokumen}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
-                  Lihat →
-                </a>
+            {p.user?.nomor_telepon && (
+              <div>
+                <div className="text-xs font-medium text-muted-foreground">No. Telepon</div>
+                <div className="mt-0.5 text-sm font-semibold text-foreground">
+                  {p.user.nomor_telepon}
+                </div>
               </div>
             )}
-            {p.bukti_transfer && (
-              <div className="up-doc-item" style={{ background: '#f0f9ff', borderColor: '#e0f2fe' }}>
-                <div className="up-doc-item-label" style={{ color: '#075985' }}>📄 Bukti Pembayaran</div>
-                <a href={`/api/preview-file/${p.bukti_transfer}`} target="_blank" rel="noopener noreferrer" className="up-doc-item-link">
-                  Lihat →
-                </a>
+            {(p.nama_bank || p.nomor_rekening || p.atas_nama) && (
+              <div className="sm:col-span-2 flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3.5">
+                <Landmark className="size-4 shrink-0 text-primary mt-0.5" />
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground">
+                    Informasi Rekening
+                  </div>
+                  <div className="mt-0.5 text-sm font-semibold text-foreground">
+                    {p.nama_bank || '-'}, {p.nomor_rekening || '-'}
+                    {p.atas_nama ? ` (a.n. ${p.atas_nama})` : ''}
+                  </div>
+                </div>
               </div>
             )}
           </div>
-        )}
 
-        {/* Action Section */}
-        <div className="up-action-section">
-          {p.status === 'Revisi Proposal' && (
-            <div style={{ marginBottom: '20px' }}>
-              <div className="up-notice warn">
-                <span className="up-notice-icon">⚠️</span>
-                <span>Proposal Anda memerlukan revisi. Silakan unggah proposal baru yang sudah diperbaiki.</span>
-              </div>
+          <Separator />
 
-              {!selectedUploadFile ? (
-                <>
-                  <div className="up-upload-zone" onClick={() => document.getElementById(`proposal-up-${p.id}`)?.click()}>
-                    <div className="up-upload-zone-icon">📎</div>
-                    <div className="up-upload-zone-text">Ketuk untuk pilih file proposal baru</div>
-                    <div className="up-upload-zone-sub">PDF, DOC, DOCX — Maks. 10MB</div>
-                  </div>
-                  <input
-                    type="file"
-                    id={`proposal-up-${p.id}`}
-                    className="up-upload-input"
-                    accept=".pdf,.doc,.docx"
-                    style={{ display: 'none' }}
-                    onChange={handleFileChange}
-                  />
-                </>
-              ) : (
-                <div className="up-file-preview" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
-                    <div style={{ fontSize: '24px' }}>📄</div>
-                    <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{selectedUploadFile.name}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>{(selectedUploadFile.size / 1024 / 1024).toFixed(2)} MB • {selectedUploadFile.type.split('/')[1]?.toUpperCase() || 'File'}</div>
-                    </div>
-                  </div>
-                  <button onClick={removeSelectedFile} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '18px', cursor: 'pointer', padding: '4px' }}>
-                    ✕
-                  </button>
-                </div>
-              )}
+          {/* Progress Timeline */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Progres Tahapan Proposal
+            </h3>
+            <Timeline currentStatus={p.status} />
+          </div>
 
-              <button
-                className="up-submit-evidence-btn"
-                onClick={() => handleUploadProposal(p.id)}
-                disabled={!selectedUploadFile}
-                style={{ opacity: !selectedUploadFile ? 0.6 : 1, cursor: !selectedUploadFile ? 'not-allowed' : 'pointer' }}
-              >
-                📤 Upload Proposal Revisi
-              </button>
-            </div>
-          )}
-
-          {p.status === 'Menunggu Evidence' && (
-            <div>
-              <div className="up-notice warn">
-                <span className="up-notice-icon">⚠️</span>
-                <span>Status Anda memerlukan tindakan. Unggah dokumen LPJ sebelum batas waktu yang tertera.</span>
-              </div>
-
-              {!selectedUploadFile ? (
-                <>
-                  <div className="up-upload-zone" onClick={() => document.getElementById(`evidence-up-${p.id}`)?.click()}>
-                    <div className="up-upload-zone-icon">📎</div>
-                    <div className="up-upload-zone-text">Ketuk untuk pilih file</div>
-                    <div className="up-upload-zone-sub">PDF, DOC, JPG, PNG — Maks. 10MB</div>
-                  </div>
-                  <input
-                    type="file"
-                    id={`evidence-up-${p.id}`}
-                    className="up-upload-input"
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    style={{ display: 'none' }}
-                    onChange={handleFileChange}
-                  />
-                </>
-              ) : (
-                <div className="up-file-preview" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
-                    <div style={{ fontSize: '24px' }}>📄</div>
-                    <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{selectedUploadFile.name}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>{(selectedUploadFile.size / 1024 / 1024).toFixed(2)} MB • {selectedUploadFile.type.split('/')[1]?.toUpperCase() || 'File'}</div>
-                    </div>
-                  </div>
-                  <button onClick={removeSelectedFile} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '18px', cursor: 'pointer', padding: '4px' }}>
-                    ✕
-                  </button>
-                </div>
-              )}
-
-              <button
-                className="up-submit-evidence-btn"
-                onClick={() => handleUploadEvidence(p.id)}
-                disabled={!selectedUploadFile}
-                style={{ opacity: !selectedUploadFile ? 0.6 : 1, cursor: !selectedUploadFile ? 'not-allowed' : 'pointer' }}
-              >
-                📤 Upload Dokumen LPJ / Evidence
-              </button>
-              <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '12px', color: 'var(--t3)' }}>
-                Laporan Absen • Foto Kegiatan • LPJ PDF
-              </div>
-            </div>
-          )}
-
-          {p.status === 'Selesai' && (
-            <div>
-              <div className="up-notice success">
-                <span className="up-notice-icon">✅</span>
-                <span>Proses Selesai! Dana telah sukses dicairkan dan seluruh dokumen LPJ telah diverifikasi.</span>
-              </div>
-
-              {(() => {
-                const ba = p.berita_acara || p.beritaAcara;
-                if (ba) {
-                  return (
-                    <div style={{ marginTop: '20px', padding: '20px', background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                      <div style={{ fontWeight: 800, color: '#16a34a', fontSize: '14.5px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.3px' }}>
-                        <span>📄</span> DOKUMEN BERITA ACARA TERBIT
+          {/* Admin Comments */}
+          {p.comments && p.comments.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2.5">
+                <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800">
+                  <MessageSquare className="size-3.5" />
+                  Catatan dari Admin
+                </h3>
+                <div className="space-y-2">
+                  {p.comments.map((c) => (
+                    <div
+                      key={c.id}
+                      className="rounded-lg border border-amber-200 bg-amber-50/70 p-3.5 text-sm text-amber-950"
+                    >
+                      <div className="mb-1 text-xs font-semibold text-amber-800">
+                        {new Date(c.created_at).toLocaleString('id-ID')}
                       </div>
-                      <div style={{ fontSize: '13.5px', color: '#334155', marginBottom: '16px', lineHeight: '1.5' }}>
-                        Berita Acara resmi dengan nomor <strong style={{ color: '#0f172a' }}>{ba.nomor_ba}</strong> telah diterbitkan untuk pengajuan proposal ini. Anda dapat mengunduh berkas PDF resmi di bawah ini.
-                      </div>
-                      <div style={{ display: 'flex', gap: '10px' }}>
+                      <p className="whitespace-pre-wrap leading-relaxed">{c.komentar}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Attached Documents */}
+          {(p.file_proposal || p.evidence_dokumen || p.bukti_transfer) && (
+            <>
+              <Separator />
+              <div className="space-y-2.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Dokumen Terlampir
+                </h3>
+                <div className="grid gap-2.5">
+                  {p.file_proposal && (
+                    <div className="flex flex-col items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                      <span className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
+                        <FileText className="size-4 shrink-0 text-emerald-700" />
+                        File Proposal
+                      </span>
+                      <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
                         <a
-                          href={`/api/proposals/${p.id}/berita-acara/preview`}
+                          href={buildFilePreviewUrl(p.file_proposal, `Proposal - ${p.kode_tiket}`)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="btn btn-d"
-                          style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ffffff', padding: '10px 18px', fontSize: '13.5px', fontWeight: 600, border: '1px solid #cbd5e1' }}
                         >
-                          👁 Preview PDF
+                          Lihat
+                          <ExternalLink className="size-3.5" />
                         </a>
+                      </Button>
+                    </div>
+                  )}
+                  {p.evidence_dokumen && (
+                    <div className="flex flex-col items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                      <span className="flex items-center gap-2 text-sm font-semibold text-amber-950">
+                        <FileText className="size-4 shrink-0 text-amber-700" />
+                        File LPJ / Evidence
+                      </span>
+                      <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
                         <a
-                          href={`/api/proposals/${p.id}/berita-acara/download`}
-                          className="btn btn-p"
-                          style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#16a34a', borderColor: '#16a34a', padding: '10px 18px', fontSize: '13.5px', fontWeight: 600, color: '#ffffff' }}
+                          href={buildFilePreviewUrl(p.evidence_dokumen, `LPJ Evidence - ${p.kode_tiket}`)}
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
-                          📥 Download PDF
+                          Lihat
+                          <ExternalLink className="size-3.5" />
                         </a>
-                      </div>
+                      </Button>
                     </div>
-                  );
-                } else {
-                  return (
-                    <div style={{ marginTop: '20px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                      <div style={{ fontWeight: 700, color: '#64748b', fontSize: '13.5px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>⏳</span> BERITA ACARA SEDANG DIPROSES
-                      </div>
-                      <div style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.4' }}>
-                        Menunggu dokumen Berita Acara resmi diterbitkan oleh Admin. Silakan periksa kembali halaman ini secara berkala.
-                      </div>
+                  )}
+                  {p.bukti_transfer && (
+                    <div className="flex flex-col items-start gap-2.5 rounded-lg border border-sky-200 bg-sky-50/70 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                      <span className="flex items-center gap-2 text-sm font-semibold text-sky-950">
+                        <FileText className="size-4 shrink-0 text-sky-700" />
+                        Bukti Pengiriman Dana
+                      </span>
+                      <Button variant="outline" size="sm" asChild className="w-full min-h-10 bg-card sm:w-auto sm:min-h-8">
+                        <a
+                          href={buildFilePreviewUrl(p.bukti_transfer, `Bukti Pengiriman Dana - ${p.kode_tiket}`)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Lihat
+                          <ExternalLink className="size-3.5" />
+                        </a>
+                      </Button>
                     </div>
-                  );
-                }
-              })()}
-            </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
 
-          {p.status === 'Gagal Bayar' && (
-            <div className="up-notice error">
-              <span className="up-notice-icon">❌</span>
-              <span>Mohon maaf, proposal ini mengalami Gagal Bayar. Silakan hubungi admin untuk informasi lebih lanjut.</span>
-            </div>
-          )}
+          <Separator />
 
-          {p.status !== 'Menunggu Evidence' && p.status !== 'Revisi Proposal' && p.status !== 'Selesai' && p.status !== 'Gagal Bayar' && (
-            <div style={{ textAlign: 'center', color: 'var(--t2)', fontSize: '13.5px', padding: '8px 0', lineHeight: '1.6' }}>
-              🔄 Sedang dalam tahap administrasi internal.<br />
-              <span style={{ color: 'var(--t3)', fontSize: '12px' }}>Pantau progres Anda secara berkala di halaman ini.</span>
-            </div>
-          )}
-        </div>
-      </div>
+          {/* Action Section */}
+          <div className="space-y-4">
+            {p.status === 'Revisi Proposal' && (
+              <div className="space-y-4">
+                <Alert variant="warning">
+                  <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                  <div>
+                    <AlertTitle>Revisi Proposal Diperlukan</AlertTitle>
+                    <AlertDescription>
+                      Silakan unggah berkas proposal terbaru yang sudah diperbaiki sesuai catatan admin.
+                    </AlertDescription>
+                  </div>
+                </Alert>
+
+                {!selectedUploadFile ? (
+                  <label
+                    htmlFor={`proposal-up-${p.id}`}
+                    className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-input bg-muted/30 px-4 py-7 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+                  >
+                    <Paperclip className="size-6 text-primary" />
+                    <div className="text-sm font-semibold text-foreground">
+                      Pilih file proposal revisi
+                    </div>
+                    <div className="text-xs text-muted-foreground">PDF, DOC, DOCX, maks. 10MB</div>
+                  </label>
+                ) : (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3.5">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FileText className="size-5 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-foreground">
+                          {selectedUploadFile.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {(selectedUploadFile.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={removeSelectedFile}
+                      aria-label="Hapus file terpilih"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                )}
+
+                <input
+                  type="file"
+                  id={`proposal-up-${p.id}`}
+                  className="sr-only up-upload-input"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleFileChange}
+                />
+
+                <Button
+                  className="w-full min-h-11"
+                  disabled={!selectedUploadFile || submitting}
+                  onClick={() => handleUploadProposal(p.id)}
+                >
+                  {submitting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Upload className="size-4" />
+                  )}
+                  Upload Proposal Revisi
+                </Button>
+              </div>
+            )}
+
+            {p.status === 'Menunggu Evidence' && (
+              <div className="space-y-4">
+                <Alert variant="warning">
+                  <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                  <div>
+                    <AlertTitle>Unggah Dokumen LPJ / Evidence</AlertTitle>
+                    <AlertDescription>
+                      Unggah laporan pertanggungjawaban (absen, foto kegiatan, LPJ PDF) sebelum batas waktu berakhir.
+                    </AlertDescription>
+                  </div>
+                </Alert>
+
+                {!selectedUploadFile ? (
+                  <label
+                    htmlFor={`evidence-up-${p.id}`}
+                    className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-input bg-muted/30 px-4 py-7 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+                  >
+                    <Paperclip className="size-6 text-primary" />
+                    <div className="text-sm font-semibold text-foreground">
+                      Pilih file LPJ atau Evidence
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      PDF, DOC, JPG, PNG, maks. 10MB
+                    </div>
+                  </label>
+                ) : (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3.5">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FileText className="size-5 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-foreground">
+                          {selectedUploadFile.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {(selectedUploadFile.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={removeSelectedFile}
+                      aria-label="Hapus file terpilih"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                )}
+
+                <input
+                  type="file"
+                  id={`evidence-up-${p.id}`}
+                  className="sr-only up-upload-input"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={handleFileChange}
+                />
+
+                <Button
+                  className="w-full min-h-11"
+                  disabled={!selectedUploadFile || submitting}
+                  onClick={() => handleUploadEvidence(p.id)}
+                >
+                  {submitting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Upload className="size-4" />
+                  )}
+                  Upload Dokumen LPJ / Evidence
+                </Button>
+              </div>
+            )}
+
+            {p.status === 'Selesai' && (
+              <div className="space-y-4">
+                <Alert variant="success">
+                  <CheckCircle2 className="size-4 shrink-0 mt-0.5" />
+                  <div>
+                    <AlertTitle>Proses Selesai</AlertTitle>
+                    <AlertDescription>
+                      Dana telah dicairkan dan seluruh dokumen LPJ telah diverifikasi.
+                    </AlertDescription>
+                  </div>
+                </Alert>
+
+                {ba ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-5 space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-bold text-emerald-900">
+                      <FileText className="size-4 text-emerald-700" />
+                      Dokumen Berita Acara Terbit
+                    </div>
+                    <p className="text-sm text-foreground/85 leading-relaxed">
+                      Berita Acara resmi bernomor{' '}
+                      <strong className="font-mono text-foreground">{ba.nomor_ba}</strong> telah
+                      diterbitkan untuk pengajuan proposal ini.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                      <Button variant="outline" size="sm" asChild className="min-h-10 bg-card">
+                        <a
+                          href={buildBeritaAcaraPreviewUrl(p.id, ba.nomor_ba)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Eye className="size-4" />
+                          Preview PDF
+                        </a>
+                      </Button>
+                      <Button size="sm" asChild className="min-h-10">
+                        <a href={`/api/proposals/${p.id}/berita-acara/download`}>
+                          <Download className="size-4" />
+                          Download PDF
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-border bg-muted/40 p-4 flex items-start gap-3">
+                    <Clock className="size-4 shrink-0 text-muted-foreground mt-0.5" />
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">
+                        Berita Acara Sedang Diproses
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                        Menunggu dokumen Berita Acara resmi diterbitkan oleh Admin. Periksa kembali halaman ini secara berkala.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {p.status === 'Gagal Bayar' && (
+              <Alert variant="destructive">
+                <XCircle className="size-4 shrink-0 mt-0.5" />
+                <div>
+                  <AlertTitle>Gagal Bayar</AlertTitle>
+                  <AlertDescription>
+                    Proposal ini mengalami kendala gagal bayar. Hubungi admin melalui tombol WhatsApp CS di bagian atas untuk tindak lanjut.
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
+
+            {!['Menunggu Evidence', 'Revisi Proposal', 'Selesai', 'Gagal Bayar'].includes(
+              p.status
+            ) && (
+              <div className="rounded-xl border border-border bg-muted/30 px-4 py-5 text-center">
+                <div className="text-sm font-semibold text-foreground">
+                  Sedang dalam tahap administrasi internal
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Pantau progres pengajuan Anda secara berkala di halaman ini.
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

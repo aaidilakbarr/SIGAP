@@ -1,22 +1,34 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  // Auth & Navigation
   const [user, setUser] = useState(null);
   const [activeRole, setActiveRole] = useState(null);
   const [activePage, setActivePage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // UI State
-  const [toastMsg, setToastMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const showToast = (msg) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 3000);
+  const showToast = (msg, type) => {
+    if (!msg) return;
+    if (type === 'error') {
+      toast.error(msg);
+      return;
+    }
+    if (type === 'success') {
+      toast.success(msg);
+      return;
+    }
+    const lower = String(msg).toLowerCase();
+    if (lower.includes('gagal') || lower.includes('failed') || lower.includes('error') || lower.includes('tidak ada')) {
+      toast.error(msg);
+    } else if (lower.includes('pilih file')) {
+      toast.warning(msg);
+    } else {
+      toast.success(msg);
+    }
   };
 
   const handleLogout = () => {
@@ -24,18 +36,26 @@ export const AppProvider = ({ children }) => {
     setActiveRole(null);
     setUser(null);
     setActivePage('dashboard');
+    setSidebarOpen(false);
   };
 
   return (
-    <AppContext.Provider value={{
-      user, setUser,
-      activeRole, setActiveRole,
-      activePage, setActivePage,
-      sidebarOpen, setSidebarOpen,
-      toastMsg, setToastMsg, showToast,
-      loading, setLoading,
-      handleLogout
-    }}>
+    <AppContext.Provider
+      value={{
+        user,
+        setUser,
+        activeRole,
+        setActiveRole,
+        activePage,
+        setActivePage,
+        sidebarOpen,
+        setSidebarOpen,
+        showToast,
+        loading,
+        setLoading,
+        handleLogout,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
